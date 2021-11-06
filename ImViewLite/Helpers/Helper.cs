@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 using System.Security.Principal;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 
 using ImViewLite.Settings;
 
@@ -62,16 +63,17 @@ namespace ImViewLite.Helpers
             return null;
         }
 
-        public static int StringCompareNatural(string a, string b, int max)
-        {
-            return string.Compare(a.PadLeft(max, '0'), b.PadLeft(max, '0'));
-        }
-
         public static int StringCompareNatural(string a, string b)
         {
-            int max = Math.Max(a.Length, b.Length);
-            return string.Compare(a.PadLeft(max, '0'), b.PadLeft(max, '0'));
+            Regex regex = InternalSettings.ReDigit;
+
+            int maxDigits = Math.Max(regex.Match(a).Value.Length, regex.Match(b).Value.Length);
+
+            return string.Compare(
+                regex.Replace(a, match => match.Value.PadLeft(maxDigits, '0')), 
+                regex.Replace(b, match => match.Value.PadLeft(maxDigits, '0')));
         }
+
 
         /// <summary>
         /// Returns the point the child window should spawn to be centered on the parent window.

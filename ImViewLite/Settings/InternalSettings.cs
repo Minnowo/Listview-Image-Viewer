@@ -7,6 +7,7 @@ using System.Xml.Serialization;
 using System.Drawing.Drawing2D;
 using System.ComponentModel;
 using System.Windows.Forms;
+using System.Text.RegularExpressions;
 
 using ImViewLite.Enums;
 using ImViewLite.Misc;
@@ -108,6 +109,7 @@ namespace ImViewLite.Settings
 
         #endregion
 
+        public static Regex ReDigit = new Regex(@"\d+", RegexOptions.Compiled);
 
         public static Font CloseButtonFont = new Font(new Font("Consolas", 10), FontStyle.Bold);
 

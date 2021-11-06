@@ -87,25 +87,25 @@ namespace ImViewLite
 
         private void _FolderWatcher_DirectoryAdded(string name)
         {
-            this.listView1.Invoke(new UniversalVoidDelegate(() => { this.listView1.VirtualListSize++; }));
+            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
             this._ListViewItemCache = null;
         }
 
         private void _FolderWatcher_FileAdded(string name)
         {
-            this.listView1.Invoke(new UniversalVoidDelegate(() => { this.listView1.VirtualListSize++; }));
+            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
             this._ListViewItemCache = null;
         }
 
         private void _FolderWatcher_DirectoryRemoved(string name)
         {
-            this.listView1.Invoke(new UniversalVoidDelegate(() => { this.listView1.VirtualListSize--; }));
+            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
             this._ListViewItemCache = null;
         }
 
         private void _FolderWatcher_FileRemoved(string name)
         {
-            this.listView1.Invoke(new UniversalVoidDelegate(() => { this.listView1.VirtualListSize--; }));
+            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
             this._ListViewItemCache = null;
         }
 
@@ -189,6 +189,7 @@ namespace ImViewLite
                 return;
             }
 
+            Directory.SetCurrentDirectory(path);
             _FolderWatcher.UpdateDirectory(path);
             Console.WriteLine(_FolderWatcher.CurrentDirectory);
             this.listView1.VirtualListSize = _FolderWatcher.GetTotalCount();

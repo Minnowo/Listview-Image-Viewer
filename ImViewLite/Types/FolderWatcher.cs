@@ -108,35 +108,33 @@ namespace ImViewLite.Misc
 
         private void InsertProperPositionFile(string name)
         {
-            int max = GetMaxFileLength();
-            Console.WriteLine(max);
             FileSortThread = Task.Run(() => {
-                for (int i = 0; i < FileCache.Count; i++)
+                int i;
+                for (i = 0; i < FileCache.Count; i++)
                 {
-                    if (Helper.StringCompareNatural(FileCache[i], name, max) >= 0)
+                    if (Helper.StringCompareNatural(FileCache[i], name) >= 0)
                     {
-                        FileCache.Insert(i, name);
-                        OnFileAdded(name);
                         break;
                     }
                 }
+                FileCache.Insert(i, name);
+                OnFileAdded(name);
             });
         }
 
         private void InsertProperPositionDirectory(string name)
         {
-            int max = GetMaxDirectoryLength();
-
             DirectorySortThread = Task.Run(() => {
-                for (int i = 0; i < DirectoryCache.Count; i++)
+                int i;
+                for (i = 0; i < DirectoryCache.Count; i++)
                 {
-                    if (Helper.StringCompareNatural(DirectoryCache[i], name, max) >= 0)
+                    if (Helper.StringCompareNatural(DirectoryCache[i], name) >= 0)
                     {
-                        DirectoryCache.Insert(i, name);
-                        OnDirectoryAdded(name);
                         break;
                     }
                 }
+                DirectoryCache.Insert(i, name);
+                OnDirectoryAdded(name);
             });
         }
 
@@ -178,16 +176,22 @@ namespace ImViewLite.Misc
 
             FileSortThread = Task.Run(() => 
             {
-                FileCache = Directory.EnumerateFiles(path).OrderByNatural(e => e).ToList();
+                FileCache.Clear();
+                foreach (string i in Directory.EnumerateFiles(path).OrderByNatural(e => e))
+                {
+                    FileCache.Add(Path.GetFileName(i));
+                }
+                // FileCache = Directory.EnumerateFiles(path).OrderByNatural(e => e).ToList();
             });
 
             DirectorySortThread = Task.Run(() =>
             {
+                DirectoryCache.Clear();
                 foreach(string i in Directory.EnumerateDirectories(path).OrderByNatural(e => e))
                 {
-                    Console.WriteLine(i);
+                    DirectoryCache.Add(Path.GetFileName(i));
                 }
-                DirectoryCache = Directory.EnumerateDirectories(path).OrderByNatural(e => e).ToList();
+                //DirectoryCache = Directory.EnumerateDirectories(path).OrderByNatural(e => e).ToList();
             });
         }
 

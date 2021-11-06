@@ -8,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
-
+using ImViewLite.Settings;
 //using ImageViewer.structs;
 
 namespace ImViewLite.Helpers
@@ -81,7 +81,7 @@ namespace ImViewLite.Helpers
 
         public static IEnumerable<T> OrderByNatural<T>(this IEnumerable<T> items, Func<T, string> selector, StringComparer stringComparer = null)
         {
-            Regex regex = new Regex(@"\d+", RegexOptions.Compiled);
+            Regex regex = InternalSettings.ReDigit;
 
             int maxDigits = items
                           .SelectMany(i => regex.Matches(selector(i)).Cast<Match>().Select(digitChunk => (int?)digitChunk.Value.Length))
