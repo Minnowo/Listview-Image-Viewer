@@ -200,6 +200,12 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.Replace_Transparency_On_Copy = value; }
         }
 
+        public static bool Agressive_Image_Unloading
+        {
+            get { return CurrentUserSettings.Agressive_Image_Unloading; }
+            set { CurrentUserSettings.Agressive_Image_Unloading = value; }
+        }
+
         public static bool Always_On_Top
         {
             get { return CurrentUserSettings.Always_On_Top; }
@@ -376,7 +382,8 @@ namespace ImViewLite.Settings
         [Description("Should the child window be centered on the parent when parent following child."), DisplayName("Center Child When Parent Following")]
         public bool CenterChild_When_Parent_Following_Child { get; set; } = true;
 
-
+        [Description("Should the parent window follow children that take control."), DisplayName("Agressive Image Unload")]
+        public bool Agressive_Image_Unloading { get; set; } = true;
 
         [Description("Copy image in a way that keeps transparency."), DisplayName("Alternate Image Copy Method (keeps transparency)")]
         public bool Use_Alternate_Copy_Method
@@ -407,6 +414,7 @@ namespace ImViewLite.Settings
         [Browsable(false)]
         [XmlIgnore]
         private bool replace_Transparency_On_Copy = false;
+
 
 
         [Description("The size of the transparent back grid cells."), DisplayName("Transparent Grid Cell Size")]

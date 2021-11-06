@@ -213,6 +213,15 @@ namespace ImViewLite
             cpf.Show();
         }
 
+        public void ReloadCurrentImage()
+        {
+            string newPath = listView1.GetSelectedItem();
+            if(newPath != imageDisplay1.ImagePath)
+            {
+                imageDisplay1.TryLoadImage(newPath);
+            }
+        }
+
         /// <summary>
         /// Executes a command. This is used for when a user presses keybinds.
         /// </summary>
@@ -285,6 +294,10 @@ namespace ImViewLite
                 if (imageDisplay1.TryLoadImage(path))
                 {
                     tsslImageSize.Text = $"{imageDisplay1.Image.Width} x {imageDisplay1.Image.Height}";
+                }
+                else if(InternalSettings.Agressive_Image_Unloading)
+                {
+                    imageDisplay1.Image = null;
                 }
             }
 
@@ -490,6 +503,8 @@ namespace ImViewLite
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
             this._ListViewItemCache = null;
+            if(InternalSettings.Agressive_Image_Unloading)
+                ReloadCurrentImage();
         }
     }
 }

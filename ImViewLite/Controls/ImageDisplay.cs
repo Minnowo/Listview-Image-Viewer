@@ -111,10 +111,14 @@ namespace ImViewLite.Controls
             }
         }
         private DrawMode _DrawMode = DrawMode.FitImage;
+
+        public string ImagePath;
+
         public bool Display = true;
         public bool IsAnimating = false;
         public bool AnimationPaused = false;
         public bool CenterImage = true;
+        public bool DisposeImageOnReplace = true;
         public double Zoom = 1;
 
         public IMAGE Image
@@ -134,6 +138,10 @@ namespace ImViewLite.Controls
                     {
                         this.IsAnimating = false;
                     }
+                }
+                if (DisposeImageOnReplace)
+                {
+                    this._Image?.Dispose();
                 }
                 this._Image = value;
                 Invalidate();
@@ -246,6 +254,7 @@ namespace ImViewLite.Controls
             if (this._Image != null)
                 _Image.Dispose();
 
+            this.ImagePath = path;
             this.Image = i;
             Invalidate();
             return true;

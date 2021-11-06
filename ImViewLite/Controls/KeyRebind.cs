@@ -204,7 +204,7 @@ namespace ImViewLite.Controls
         {
             Forms.ArgumentSelectionForm f = new Forms.ArgumentSelectionForm(this.Function);
             f.Args = this.KeyBind.Args;
-            f.Location = Cursor.Position;
+            f.StartPosition = FormStartPosition.CenterScreen;
             f.Size = new Size(500, 200);
             f.MaximumSize = new Size(550, 500);
             f.MinimumSize = new Size(100, 100);

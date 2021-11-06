@@ -47,7 +47,7 @@ namespace ImViewLite.Forms
             }
             set
             {
-                if (value.Length != _NumberOfArgs)
+                if (value == null || value.Length != _NumberOfArgs)
                     return;
 
                 for (int i = 0; i < _NumberOfArgs; i++)
