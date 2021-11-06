@@ -115,7 +115,7 @@ namespace ImViewLite.Helpers
         /// <param name="index">The index of the frame.</param>
         public void SetFrame(int index)
         {
-            if (index > FrameCount - 1)
+            if (index > FrameCount - 1 || index < 0)
                 return;
 
             // Convert each 4-byte chunk into an integer.

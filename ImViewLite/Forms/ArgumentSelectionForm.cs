@@ -107,10 +107,7 @@ namespace ImViewLite.Forms
                 case Command.PauseGif:
                 case Command.NextFrame:
                 case Command.PreviousFrame:
-                case Command.NextImage:
-                case Command.PreviousImage:
                 case Command.ToggleAlwaysOnTop:
-                case Command.OpenNewInstance:
                 case Command.DeleteImage:
                 case Command.InvertColor:
                 case Command.Grayscale:

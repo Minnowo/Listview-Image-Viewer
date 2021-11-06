@@ -153,7 +153,86 @@ namespace ImViewLite.Controls
             this.InitTileBrush((int)(this.CellSize * this.CellScale), this.CellColor1, this.CellColor2);
         }
 
+        /// <summary>
+        /// Load the next frame of the image;
+        /// </summary>
+        public void NextImageFrame()
+        {
+            if (_Image == null)
+                return;
 
+            ImgFormat fmt = _Image.GetImageFormat();
+
+            if(fmt == ImgFormat.gif)
+            {
+                (_Image as Gif).NextFrame();
+            }
+            else if(fmt == ImgFormat.ico)
+            {
+                (_Image as ICO).SelectedImageIndex++;
+            }
+        }
+
+        /// <summary>
+        /// Loads the previous image frame.
+        /// </summary>
+        public void PreviousImageFrame()
+        {
+            if (_Image == null)
+                return;
+
+            ImgFormat fmt = _Image.GetImageFormat();
+
+            if (fmt == ImgFormat.gif)
+            {
+                (_Image as Gif).PreviousFrame();
+            }
+            else if (fmt == ImgFormat.ico)
+            {
+                (_Image as ICO).SelectedImageIndex--;
+            }
+        }
+
+        /// <summary>
+        /// Copies the current image to the clipboard.
+        /// </summary>
+        public void CopyImage()
+        {
+            if (_Image == null)
+                return;
+
+            ClipboardHelper.CopyImage(_Image);
+        }
+
+        /// <summary>
+        /// Inverts the color of the current image.
+        /// </summary>
+        public void InvertColor()
+        {
+            if (_Image == null)
+                return;
+
+            _Image.InvertColor();
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Converts the current image to grayscale.
+        /// </summary>
+        public void ConvertGrayscale()
+        {
+            if (_Image == null)
+                return;
+
+            _Image.ConvertGrayscale();
+            Invalidate();
+        }
+
+        /// <summary>
+        /// Tries to load an image from the given path.
+        /// </summary>
+        /// <param name="path">The path of the image.</param>
+        /// <returns>true if the image was loaded, else false.</returns>
         public bool TryLoadImage(string path)
         {
             if (!File.Exists(path))
@@ -172,7 +251,7 @@ namespace ImViewLite.Controls
             return true;
         }
 
-        public Rectangle GetInsideViewPort(bool includePadding)
+        private Rectangle GetInsideViewPort(bool includePadding)
         {
             int left = 0;
             int top = 0;

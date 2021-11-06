@@ -111,7 +111,7 @@ namespace ImViewLite.Helpers
         public virtual bool IsAnimating { get; protected set; }
 
         private List<EventHandler> FrameChangedHandlerCallbacks = new List<EventHandler>();
-
+        private GifDecoder _Decoder;
 
         public Gif()
         {
@@ -384,6 +384,28 @@ namespace ImViewLite.Helpers
                 _StartAnimate();
         }
 
+        /// <summary>
+        /// Moves the displayed frame to the previous fame.
+        /// </summary>
+        public void PreviousFrame()
+        {
+            if (_Decoder == null)
+                _Decoder = new GifDecoder(this);
+
+            _Decoder.SetFrame(_Decoder.ActiveFrameIndex - 1);
+        }
+
+        /// <summary>
+        /// Moves the displayed frame to the next frame.
+        /// </summary>
+        public void NextFrame()
+        {
+            if (_Decoder == null)
+                _Decoder = new GifDecoder(this);
+
+            _Decoder.SetFrame(_Decoder.ActiveFrameIndex + 1);
+        }
+
         public override void Reisze(Size newSize, InterpolationMode interp)
         {
             if (this.Image == null)
@@ -413,9 +435,9 @@ namespace ImViewLite.Helpers
         }
 
         /// <summary>
-        /// Dispose of the image.
+        /// Clears the image
         /// </summary>
-        public new void Dispose()
+        public override void Clear()
         {
             if (this.IsAnimating)
                 StopAnimate();
@@ -424,6 +446,16 @@ namespace ImViewLite.Helpers
                 Image.Dispose();
 
             Image = null;
+            _Decoder = null;
+        }
+
+        /// <summary>
+        /// Dispose of the image.
+        /// </summary>
+        public new void Dispose()
+        {
+            Clear();
+            GC.SuppressFinalize(this);
         }
 
 

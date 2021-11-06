@@ -160,6 +160,11 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.Parent_Follow_Child = value; }
         }
 
+        public static bool Full_Row_Select
+        {
+            get { return CurrentUserSettings.Full_Row_Select; }
+            set { CurrentUserSettings.Full_Row_Select = value; }
+        }
 
         // because of how we load the image there is extra memory that doesn't get disposed
         // and calling GC.Collect removes that, but since garbage collection can cause problems
@@ -201,13 +206,14 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.Always_On_Top = value; }
         }
 
-        public static readonly HotkeyEx[] Default_Key_Binds = new HotkeyEx[5]
+        public static readonly HotkeyEx[] Default_Key_Binds = new HotkeyEx[6]
         {
             new HotkeyEx(Keys.Back, Command.UpDirectoryLevel),
-            new HotkeyEx(Keys.Right | Keys.Control , Command.NextImage),
-            new HotkeyEx(Keys.Left | Keys.Control , Command.PreviousImage),
-            new HotkeyEx(Keys.A | Keys.Control, Command.PreviousImage),
-            new HotkeyEx(Keys.D | Keys.Control, Command.NextImage),
+            new HotkeyEx(Keys.Delete , Command.DeleteImage),
+            new HotkeyEx(Keys.R, Command.RenameImage),
+            new HotkeyEx(Keys.Space, Command.PauseGif),
+            new HotkeyEx(Keys.I, Command.InvertColor),
+            new HotkeyEx(Keys.G, Command.Grayscale)
         };
 
         public static bool WebP_Plugin_Exists = false;
@@ -359,7 +365,10 @@ namespace ImViewLite.Settings
         public bool Always_On_Top { get; set; } = false;
 
 
-       
+        [Description("Enabled fullrow select in the listview"), DisplayName("Full Row Select")]
+        public bool Full_Row_Select { get; set; } = false;
+
+
         [Description("Should the parent window follow children that take control."), DisplayName("Parent Follow Children")]
         public bool Parent_Follow_Child { get; set; } = true;
 

@@ -11,16 +11,30 @@ namespace ImViewLite.Controls
 {
     class LISTVIEW : ListView
     {
-        public ListViewItem LastSelectedItem;
         public int NewestSelectedIndex = -1;
         public int OldestSelectedIndex = -1;
-        public SelectedIndexCollection SelectedIndexes;
+        public int SelectedItemsCount = 0;
+        public ListViewItem LastSelectedItem;
+        
+        bool _IsLeftClick = false;
+        bool _IsRightClick = false;
+
         public LISTVIEW()
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.EnableNotifyMessage, true);
-            SelectedIndexes = this.SelectedIndices;
         }
         
+        public string GetSelectedItem()
+        {
+            if (NewestSelectedIndex == -1)
+                return string.Empty;
+
+            if (Items.Count <= NewestSelectedIndex)
+                return string.Empty;
+
+            return Items[NewestSelectedIndex].SubItems[2].Text;
+        }
+
         protected override void OnItemSelectionChanged(ListViewItemSelectionChangedEventArgs e)
         {
             LastSelectedItem = e.Item;
@@ -30,49 +44,112 @@ namespace ImViewLite.Controls
             base.OnItemSelectionChanged(e);    
         }
 
-        protected override void OnMouseClick(MouseEventArgs e)
+        
+        protected override void OnMouseUp(MouseEventArgs e)
         {
             base.OnMouseUp(e);
-
             switch (e.Button)
             {
                 case MouseButtons.Left:
-                    this.SelectedIndexes = this.SelectedIndices;
-                    int count = this.SelectedIndices.Count;
+                    _IsLeftClick = false;
+                    SelectedItemsCount = this.SelectedIndices.Count;
 
-                    if (count < 1)
+                    if (SelectedItemsCount < 1)
                         return;
-                    
-                    if(this.OldestSelectedIndex == this.SelectedIndices[0])
+
+                    if (this.OldestSelectedIndex == this.SelectedIndices[0])
                     {
-                        this.NewestSelectedIndex = this.SelectedIndices[count - 1];
+                        this.NewestSelectedIndex = this.SelectedIndices[SelectedItemsCount - 1];
                     }
                     if (this.NewestSelectedIndex == this.SelectedIndices[0])
                     {
-                        this.OldestSelectedIndex = this.SelectedIndices[count - 1];
+                        this.OldestSelectedIndex = this.SelectedIndices[SelectedItemsCount - 1];
                     }
+                    OnSelectedIndexChanged(EventArgs.Empty);
+                    break;
+                case MouseButtons.Right:
+                    _IsRightClick = false;
+                    break;
+            }
+        }
+
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            switch (e.Button)
+            {
+                case MouseButtons.Left:
+                    _IsLeftClick = true;
+                    break;
+                case MouseButtons.Right:
+                    _IsRightClick = true;
+                    break;
+            }
+        }
+
+        protected override void OnMouseHover(EventArgs e)
+        {
+            base.OnMouseHover(e);
+            if (_IsLeftClick)
+            {
+                int count = this.SelectedIndices.Count;
+                if (SelectedItemsCount != count)
+                {
+                    SelectedItemsCount = count;
+                    if (this.OldestSelectedIndex == this.SelectedIndices[0])
+                    {
+                        this.NewestSelectedIndex = this.SelectedIndices[SelectedItemsCount - 1];
+                    }
+                    if (this.NewestSelectedIndex == this.SelectedIndices[0])
+                    {
+                        this.OldestSelectedIndex = this.SelectedIndices[SelectedItemsCount - 1];
+                    }
+                    OnSelectedIndexChanged(EventArgs.Empty);
+                }
+            }
+        }
+
+        protected override void OnKeyUp(KeyEventArgs e)
+        {
+            base.OnKeyUp(e);
+
+            switch (e.KeyData)
+            {
+                case Keys.Up:
+                case Keys.Down:
+                    this.SelectedItemsCount = 1;
+                    OnSelectedIndexChanged(EventArgs.Empty);
+                    break;
+                case Keys.Shift | Keys.Down:
+                    SelectedItemsCount = this.SelectedIndices.Count;
+                    OnSelectedIndexChanged(EventArgs.Empty);
+                    break;
+
+                case Keys.Shift | Keys.Up:
+                    SelectedItemsCount = this.SelectedIndices.Count;
                     OnSelectedIndexChanged(EventArgs.Empty);
                     break;
             }
         }
 
-
         protected override void OnKeyDown(KeyEventArgs e)
         {
             base.OnKeyDown(e);
 
-            if (this.SelectedIndexes.Count < 1)
-                return;
-
             switch (e.KeyData)
             {
+                case Keys.Up:
+                case Keys.Down:
+                    this.SelectedItemsCount = 1;
+                    OnSelectedIndexChanged(EventArgs.Empty);
+                    break;
                 case Keys.Shift | Keys.Down:
-                    this.SelectedIndexes.Add(this.NewestSelectedIndex);
+                    this.SelectedIndices.Add(this.NewestSelectedIndex);
                     this.NewestSelectedIndex = (this.NewestSelectedIndex + 1).ClampMax(this.Items.Count);
                     break;
 
                 case Keys.Shift | Keys.Up:
-                    this.SelectedIndexes.Add(this.NewestSelectedIndex);
+                    this.SelectedIndices.Add(this.NewestSelectedIndex);
                     this.NewestSelectedIndex = (this.NewestSelectedIndex - 1).ClampMin(0);
                     break;
             }

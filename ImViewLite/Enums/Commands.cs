@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace ImViewLite.Enums
 {
+
     public enum Command
     {
         Nothing,
@@ -15,10 +16,7 @@ namespace ImViewLite.Enums
         PauseGif,
         NextFrame,
         PreviousFrame,
-        NextImage,
-        PreviousImage,
         ToggleAlwaysOnTop,
-        OpenNewInstance,
         MoveImage,
         RenameImage,
         DeleteImage,

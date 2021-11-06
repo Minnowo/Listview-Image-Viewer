@@ -51,10 +51,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Controls\FunctionSelectorForm.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Controls\FunctionSelectorForm.Designer.cs" />
     <Compile Include="Controls\HotkeyControl.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -83,6 +79,7 @@
       <SubType>Component</SubType>
     </Compile>
     <Compile Include="Enums\Commands.cs" />
+    <Compile Include="Enums\EnumToString.cs" />
     <Compile Include="Forms\ArgumentSelectionForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -181,7 +178,6 @@
     <Compile Include="Settings\SettingsLoader.cs" />
     <Compile Include="Types\FolderWatcher.cs" />
     <Compile Include="Types\Hotkey.cs" />
-    <EmbeddedResource Include="Controls\FunctionSelectorForm.resx" />
     <EmbeddedResource Include="Controls\HotkeyControl.resx" />
     <EmbeddedResource Include="Controls\KeyRebind.resx" />
     <EmbeddedResource Include="Controls\RenameFileForm.resx">

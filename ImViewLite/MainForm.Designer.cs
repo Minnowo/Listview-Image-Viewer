@@ -33,17 +33,17 @@ namespace ImViewLite
             System.Windows.Forms.ListViewGroup listViewGroup4 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.scMainContainer = new System.Windows.Forms.SplitContainer();
+            this.listView1 = new ImViewLite.Controls.LISTVIEW();
+            this.chName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.chSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.chPath = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.imageDisplay1 = new ImViewLite.Controls.ImageDisplay();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsslItemOfItems = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslFilePath = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslSPACE1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslFileSize = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslImageSize = new System.Windows.Forms.ToolStripStatusLabel();
-            this.listView1 = new ImViewLite.Controls.LISTVIEW();
-            this.chName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.chSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.chPath = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.imageDisplay1 = new ImViewLite.Controls.ImageDisplay();
             this.tseMainToolstrip = new ImViewLite.Controls.ToolStripEx();
             this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -92,51 +92,6 @@ namespace ImViewLite
             this.scMainContainer.Size = new System.Drawing.Size(800, 385);
             this.scMainContainer.SplitterDistance = 483;
             this.scMainContainer.TabIndex = 2;
-            // 
-            // statusStrip1
-            // 
-            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.tsslItemOfItems,
-            this.tsslFilePath,
-            this.tsslSPACE1,
-            this.tsslFileSize,
-            this.tsslImageSize});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 428);
-            this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(800, 22);
-            this.statusStrip1.TabIndex = 3;
-            this.statusStrip1.Text = "statusStrip1";
-            // 
-            // tsslItemOfItems
-            // 
-            this.tsslItemOfItems.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
-            this.tsslItemOfItems.Name = "tsslItemOfItems";
-            this.tsslItemOfItems.Size = new System.Drawing.Size(4, 17);
-            this.tsslItemOfItems.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // tsslFilePath
-            // 
-            this.tsslFilePath.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
-            this.tsslFilePath.Name = "tsslFilePath";
-            this.tsslFilePath.Size = new System.Drawing.Size(4, 17);
-            this.tsslFilePath.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            // 
-            // tsslSPACE1
-            // 
-            this.tsslSPACE1.Name = "tsslSPACE1";
-            this.tsslSPACE1.Size = new System.Drawing.Size(773, 17);
-            this.tsslSPACE1.Spring = true;
-            // 
-            // tsslFileSize
-            // 
-            this.tsslFileSize.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
-            this.tsslFileSize.Name = "tsslFileSize";
-            this.tsslFileSize.Size = new System.Drawing.Size(4, 17);
-            // 
-            // tsslImageSize
-            // 
-            this.tsslImageSize.Name = "tsslImageSize";
-            this.tsslImageSize.Size = new System.Drawing.Size(0, 17);
             // 
             // listView1
             // 
@@ -191,6 +146,51 @@ namespace ImViewLite
             this.imageDisplay1.Name = "imageDisplay1";
             this.imageDisplay1.Size = new System.Drawing.Size(313, 385);
             this.imageDisplay1.TabIndex = 0;
+            // 
+            // statusStrip1
+            // 
+            this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.tsslItemOfItems,
+            this.tsslFilePath,
+            this.tsslSPACE1,
+            this.tsslFileSize,
+            this.tsslImageSize});
+            this.statusStrip1.Location = new System.Drawing.Point(0, 428);
+            this.statusStrip1.Name = "statusStrip1";
+            this.statusStrip1.Size = new System.Drawing.Size(800, 22);
+            this.statusStrip1.TabIndex = 3;
+            this.statusStrip1.Text = "statusStrip1";
+            // 
+            // tsslItemOfItems
+            // 
+            this.tsslItemOfItems.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.tsslItemOfItems.Name = "tsslItemOfItems";
+            this.tsslItemOfItems.Size = new System.Drawing.Size(4, 17);
+            this.tsslItemOfItems.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // tsslFilePath
+            // 
+            this.tsslFilePath.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.tsslFilePath.Name = "tsslFilePath";
+            this.tsslFilePath.Size = new System.Drawing.Size(4, 17);
+            this.tsslFilePath.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
+            // tsslSPACE1
+            // 
+            this.tsslSPACE1.Name = "tsslSPACE1";
+            this.tsslSPACE1.Size = new System.Drawing.Size(773, 17);
+            this.tsslSPACE1.Spring = true;
+            // 
+            // tsslFileSize
+            // 
+            this.tsslFileSize.BorderSides = System.Windows.Forms.ToolStripStatusLabelBorderSides.Right;
+            this.tsslFileSize.Name = "tsslFileSize";
+            this.tsslFileSize.Size = new System.Drawing.Size(4, 17);
+            // 
+            // tsslImageSize
+            // 
+            this.tsslImageSize.Name = "tsslImageSize";
+            this.tsslImageSize.Size = new System.Drawing.Size(0, 17);
             // 
             // tseMainToolstrip
             // 
@@ -289,6 +289,8 @@ namespace ImViewLite
             this.Controls.Add(this.textBox1);
             this.Controls.Add(this.tseMainToolstrip);
             this.Name = "MainForm";
+            this.ShowIcon = false;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.scMainContainer.Panel1.ResumeLayout(false);
             this.scMainContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.scMainContainer)).EndInit();

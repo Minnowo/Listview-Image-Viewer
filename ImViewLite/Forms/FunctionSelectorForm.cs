@@ -22,7 +22,7 @@ namespace ImViewLite.Forms
                 Button tsmi = new Button();
                 tsmi.TabIndex = i;
                 tsmi.Tag = (Command)i;
-                tsmi.Text = ((Command)i).ToString();
+                tsmi.Text = EnumToString.CommandToString((Command)i);
 
                 tsmi.Dock = DockStyle.Top;
                 tsmi.FlatStyle = FlatStyle.Flat;
@@ -35,14 +35,14 @@ namespace ImViewLite.Forms
             }
         }
 
-        public void ItemSelected1(Command c)
+        public void ItemSelected(Command c)
         {
             SelectedFunction = c;
             DialogResult = DialogResult.OK;
             Close();
         }
 
-        private void ButtonCallback1(object sender, EventArgs e)
+        private void ButtonCallback(object sender, EventArgs e)
         {
             Button b = sender as Button;
             if(b != null)

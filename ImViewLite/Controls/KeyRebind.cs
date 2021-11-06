@@ -1,16 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-
-using ImViewLite.Helpers;
+﻿using ImViewLite.Enums;
 using ImViewLite.Misc;
-using ImViewLite.Enums;
+using System;
+using System.Drawing;
+using System.Windows.Forms;
 
 namespace ImViewLite.Controls
 {
@@ -36,7 +28,7 @@ namespace ImViewLite.Controls
             set 
             {
                 m_Function = value;
-                btnFunction.Text = value.ToString();
+                btnFunction.Text = EnumToString.CommandToString(value);
             } 
         }
         private Command m_Function = Command.Nothing;
@@ -71,7 +63,7 @@ namespace ImViewLite.Controls
         public KeyRebind()
         {
             InitializeComponent();
-            btnFunction.Text = m_Function.ToString();
+            btnFunction.Text = EnumToString.CommandToString(m_Function);
             KeyBind = new HotkeyEx();
             IsEditingKeybind = false;
 
@@ -208,7 +200,7 @@ namespace ImViewLite.Controls
             }
         }
 
-        private void button1_Click(object sender, EventArgs e)
+        private void ArgumentSelction_Click(object sender, EventArgs e)
         {
             Forms.ArgumentSelectionForm f = new Forms.ArgumentSelectionForm(this.Function);
             f.Args = this.KeyBind.Args;
@@ -308,7 +300,7 @@ namespace ImViewLite.Controls
             this.button1.TabIndex = 5;
             this.button1.Text = "Args";
             this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
+            this.button1.Click += new System.EventHandler(this.ArgumentSelction_Click);
             // 
             // KeyRebind
             // 

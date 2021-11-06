@@ -71,6 +71,7 @@ namespace ImViewLite
             this.listView1.VirtualMode = true;
             this.listView1.VirtualListSize = 0;
             this.listView1.Sorting = SortOrder.None;
+            this.listView1.FullRowSelect = InternalSettings.Full_Row_Select;
 
             listView1.RetrieveVirtualItem += new RetrieveVirtualItemEventHandler(listView1_RetrieveVirtualItem);
             listView1.CacheVirtualItems += new CacheVirtualItemsEventHandler(listView1_CacheVirtualItems);
@@ -85,115 +86,24 @@ namespace ImViewLite
             ResumeLayout();
         }
 
-        private void _FolderWatcher_DirectoryAdded(string name)
-        {
-            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
-            this._ListViewItemCache = null;
-        }
-
-        private void _FolderWatcher_FileAdded(string name)
-        {
-            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
-            this._ListViewItemCache = null;
-        }
-
-        private void _FolderWatcher_DirectoryRemoved(string name)
-        {
-            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            this._ListViewItemCache = null;
-        }
-
-        private void _FolderWatcher_FileRemoved(string name)
-        {
-            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            this._ListViewItemCache = null;
-        }
-
-        public void ExecuteCommand(Command cmd, string[] args = null)
-        {
-            string path = listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text;
-            switch (cmd)
-            {
-                case Command.Nothing:
-                    break;
-
-                case Command.CopyImage:
-                    if (this.imageDisplay1.Image != null)
-                    {
-                        ClipboardHelper.CopyImage(this.imageDisplay1.Image);
-                    }
-                    break;
-
-                case Command.UpDirectoryLevel:
-                    DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
-                    if (info.Parent != null)
-                    {
-                        this.UpdateDirectory(info.Parent.FullName, true);
-                    }
-                    break;
-
-                case Command.OpenSelectedDirectory:
-                    Console.WriteLine(path);
-                    UpdateDirectory(path, true);
-                    break;
-
-                case Command.PauseGif:
-                case Command.NextFrame:
-                case Command.PreviousFrame:
-                case Command.NextImage:
-                case Command.PreviousImage:
-                case Command.ToggleAlwaysOnTop:
-                case Command.OpenNewInstance:
-                case Command.MoveImage:
-                    
-                    if (!File.Exists(path))
-                        return;
-
-                    if (args != null && args.Length > 0 && Directory.Exists(args[0]))
-                    {
-                        PathHelper.MoveFile(path, Path.Combine(args[0], Path.GetFileName(path)));
-                    }
-                    else
-                    {
-                        PathHelper.MoveFile(path, Helper.MoveFileDialog(path));
-                    }
-
-                    break;
-                case Command.RenameImage:
-                    RenameFileForm.RenamePath(path);
-                    break;
-                case Command.DeleteImage:
-                    PathHelper.DeleteFileOrPath(path);
-                    break;
-                case Command.InvertColor:
-                case Command.Grayscale:
-                case Command.OpenColorPicker:
-                case Command.OpenSettings:
-                    break;
-            }
-        }
-
-        private void MainForm_KeyUp(object sender, KeyEventArgs e)
-        {
-            base.OnKeyDown(e);
-
-            if (InternalSettings.CurrentUserSettings.Binds.ContainsKey(e.KeyData))
-            {
-                ExecuteCommand(
-                    InternalSettings.CurrentUserSettings.Binds[e.KeyData].Function,
-                    InternalSettings.CurrentUserSettings.Binds[e.KeyData].Args);
-            }
-
-        }
-
+        /// <summary>
+        /// Updates variables on the mainfrom which reference the InternalSettings class
+        /// </summary>
         public void UpdateSettings()
         {
             this.TopMost = InternalSettings.Always_On_Top;
             this.imageDisplay1.CellSize = InternalSettings.Grid_Cell_Size;
             this.imageDisplay1.CellColor1 = InternalSettings.Image_Box_Back_Color;
             this.imageDisplay1.CellColor2 = InternalSettings.Image_Box_Back_Color_Alternate;
+            this.listView1.FullRowSelect = InternalSettings.Full_Row_Select;
         }
 
+        /// <summary>
+        /// Changes the current working directory into the given directory
+        /// And loads all the files and sub directories from the given into sorted lists
+        /// </summary>
+        /// <param name="path">The new directory path.</param>
+        /// <param name="update">Forces a reload, even if the current directory is the same as the given.</param>
         public void LoadDirectory(string path, bool update = false)
         {
             if (_CurrentDirectory != path && !update)
@@ -212,33 +122,147 @@ namespace ImViewLite
             GC.Collect();
         }
 
+        /// <summary>
+        /// Changes the current directory to the given path and loads the new directory
+        /// </summary>
+        /// <param name="path">The new directory path.</param>
+        /// <param name="updateTextbox">Should the textbox at the top be changed.</param>
         public void UpdateDirectory(string path, bool updateTextbox = false)
         {
-            if (Directory.Exists(path))
+            if (!Directory.Exists(path))
+                return;
+            
+            this.preventOverflow = true;
+            path = new DirectoryInfo(path).FullName;
+
+            if (path[path.Length - 1] != '\\')
+                path += '\\';
+
+            this.CurrentDirectory = path;
+
+            if (updateTextbox)
             {
-                this.preventOverflow = true;
-                path = new DirectoryInfo(path).FullName;
+                this.textBox1.Text = $"\"{path}\"";
+            }
+            this.preventOverflow = false;
+        }
 
-                if (path[path.Length - 1] != '\\')
-                    path += '\\';
+        /// <summary>
+        /// Moves the given file to the given path.
+        /// </summary>
+        /// <param name="path">The path of the file to move.</param>
+        /// <param name="args">The args of the keybind, arg[0] should be the new directory path.</param>
+        public void MoveImage(string path, string[] args = null)
+        {
+            if (!File.Exists(path))
+                return;
 
-                this.CurrentDirectory = path;
+            if (args != null && args.Length > 0 && Directory.Exists(args[0]))
+            {
+                PathHelper.MoveFile(path, Path.Combine(args[0], Path.GetFileName(path)));
+            }
+            else
+            {
+                PathHelper.MoveFile(path, Helper.MoveFileDialog(path));
+            }
+        }
 
-                if (updateTextbox)
-                {
-                    this.textBox1.Text = $"\"{path}\"";
-                }
-                this.preventOverflow = false;
+        /// <summary>
+        /// Moves the current directory to its parent.
+        /// </summary>
+        public void UpDirectoryLevel()
+        {
+            DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
+            if (info.Parent != null)
+            {
+                this.UpdateDirectory(info.Parent.FullName, true);
+            }
+        }
+
+        /// <summary>
+        /// Toggles the always on top setting and applies changes.
+        /// </summary>
+        public void ToggleAlwaysOnTop()
+        {
+            InternalSettings.Always_On_Top = !InternalSettings.Always_On_Top;
+            this.TopMost = InternalSettings.Always_On_Top;
+        }
+
+        /// <summary>
+        /// Opens the settings file dialog.
+        /// </summary>
+        public void OpenSettings()
+        {
+            using (SettingsForm sf = new SettingsForm())
+            {
+                sf.StartPosition = FormStartPosition.CenterScreen;
+                sf.ShowDialog();
+                UpdateSettings();
+            }
+        }
+
+        /// <summary>
+        /// Opens a new color picker.
+        /// </summary>
+        public void OpenColorPicker()
+        {
+            ColorPickerForm cpf = new ColorPickerForm();
+            cpf.TopMost = this.TopMost;
+            cpf.Owner = this;
+            cpf.StartPosition = FormStartPosition.CenterScreen;
+            cpf.Show();
+        }
+
+        /// <summary>
+        /// Executes a command. This is used for when a user presses keybinds.
+        /// </summary>
+        /// <param name="cmd">The command to run.</param>
+        /// <param name="args">The arguments for the command.</param>
+        public void ExecuteCommand(Command cmd, string[] args = null)
+        {
+            string path = listView1.GetSelectedItem();
+            switch (cmd)
+            {
+                case Command.Nothing:               break;
+                case Command.CopyImage:             imageDisplay1.CopyImage(); break;
+                case Command.PauseGif:              imageDisplay1.AnimationPaused = !imageDisplay1.AnimationPaused; break;
+                case Command.InvertColor:           imageDisplay1.InvertColor(); break;
+                case Command.Grayscale:             imageDisplay1.ConvertGrayscale(); break;
+                case Command.NextFrame:             imageDisplay1.NextImageFrame(); break;
+                case Command.PreviousFrame:         imageDisplay1.PreviousImageFrame(); break;
+                case Command.UpDirectoryLevel:      UpDirectoryLevel(); break;
+                case Command.OpenSelectedDirectory: UpdateDirectory(path, true); break;
+                case Command.MoveImage:             MoveImage(path, args); break;
+                case Command.RenameImage:           RenameFileForm.RenamePath(path); break;
+                case Command.DeleteImage:           PathHelper.DeleteFileOrPath(path); break;
+                case Command.ToggleAlwaysOnTop:     ToggleAlwaysOnTop(); break;
+                case Command.OpenColorPicker:       OpenColorPicker(); break;
+                case Command.OpenSettings:          OpenSettings(); break;
             }
         }
 
 
-        public void UpdateAfterIndexChanged()
+
+
+        private void MainForm_KeyUp(object sender, KeyEventArgs e)
         {
-            string path = listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text;
+            base.OnKeyDown(e);
+            
+            if (InternalSettings.CurrentUserSettings.Binds.ContainsKey(e.KeyData))
+            {
+                ExecuteCommand(
+                    InternalSettings.CurrentUserSettings.Binds[e.KeyData].Function,
+                    InternalSettings.CurrentUserSettings.Binds[e.KeyData].Args);
+            }
+        }
 
 
-            tsslItemOfItems.Text = $"{Math.Abs(listView1.OldestSelectedIndex - listView1.NewestSelectedIndex) + 1} / {listView1.Items.Count} object(s) selected";
+
+        private void UpdateAfterIndexChanged()
+        {
+            string path = listView1.GetSelectedItem();
+
+            tsslItemOfItems.Text = $"{listView1.SelectedItemsCount} / {listView1.Items.Count} object(s) selected";
             tsslFileSize.Text = "";
             tsslFilePath.Text = "";
             tsslImageSize.Text = "";
@@ -441,9 +465,31 @@ namespace ImViewLite
 
         private void tsbSettings_Click(object sender, EventArgs e)
         {
-            SettingsForm sf = new SettingsForm();
-            sf.ShowDialog();
-            UpdateSettings();
+            OpenSettings();
+        }
+
+        private void _FolderWatcher_DirectoryAdded(string name)
+        {
+            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
+            this._ListViewItemCache = null;
+        }
+
+        private void _FolderWatcher_FileAdded(string name)
+        {
+            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
+            this._ListViewItemCache = null;
+        }
+
+        private void _FolderWatcher_DirectoryRemoved(string name)
+        {
+            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
+            this._ListViewItemCache = null;
+        }
+
+        private void _FolderWatcher_FileRemoved(string name)
+        {
+            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
+            this._ListViewItemCache = null;
         }
     }
 }
