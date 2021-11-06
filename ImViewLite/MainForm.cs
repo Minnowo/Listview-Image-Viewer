@@ -111,24 +111,32 @@ namespace ImViewLite
 
         public void ExecuteCommand(Command cmd, string[] args = null)
         {
+            string path = listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text;
             switch (cmd)
             {
                 case Command.Nothing:
                     break;
+
                 case Command.CopyImage:
                     if (this.imageDisplay1.Image != null)
+                    {
                         ClipboardHelper.CopyImage(this.imageDisplay1.Image);
+                    }
                     break;
+
                 case Command.UpDirectoryLevel:
                     DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
                     if (info.Parent != null)
+                    {
                         this.UpdateDirectory(info.Parent.FullName, true);
+                    }
                     break;
+
                 case Command.OpenSelectedDirectory:
-                    string dir = listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text;
-                    Console.WriteLine(dir);
-                    UpdateDirectory(dir, true);
+                    Console.WriteLine(path);
+                    UpdateDirectory(path, true);
                     break;
+
                 case Command.PauseGif:
                 case Command.NextFrame:
                 case Command.PreviousFrame:
@@ -137,23 +145,26 @@ namespace ImViewLite
                 case Command.ToggleAlwaysOnTop:
                 case Command.OpenNewInstance:
                 case Command.MoveImage:
-                    string file = listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text;
-                    if (!File.Exists(file))
+                    
+                    if (!File.Exists(path))
                         return;
 
                     if (args != null && args.Length > 0 && Directory.Exists(args[0]))
                     {
-                        Console.WriteLine($"moving: {file} {args[0]}");
-                        PathHelper.MoveFile(file, Path.Combine(args[0], Path.GetFileName(file)));
+                        PathHelper.MoveFile(path, Path.Combine(args[0], Path.GetFileName(path)));
                     }
                     else
                     {
-                        PathHelper.MoveFile(file, Helper.MoveFileDialog(file));
+                        PathHelper.MoveFile(path, Helper.MoveFileDialog(path));
                     }
 
                     break;
                 case Command.RenameImage:
+                    RenameFileForm.RenamePath(path);
+                    break;
                 case Command.DeleteImage:
+                    PathHelper.DeleteFileOrPath(path);
+                    break;
                 case Command.InvertColor:
                 case Command.Grayscale:
                 case Command.OpenColorPicker:
@@ -167,9 +178,11 @@ namespace ImViewLite
             base.OnKeyDown(e);
 
             if (InternalSettings.CurrentUserSettings.Binds.ContainsKey(e.KeyData))
+            {
                 ExecuteCommand(
                     InternalSettings.CurrentUserSettings.Binds[e.KeyData].Function,
                     InternalSettings.CurrentUserSettings.Binds[e.KeyData].Args);
+            }
 
         }
 

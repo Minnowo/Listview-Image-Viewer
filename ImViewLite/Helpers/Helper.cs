@@ -21,6 +21,8 @@ namespace ImViewLite.Helpers
         public const byte PixelPerInch = 96;
         public const float PixelPerCm = 37.8f;
 
+        public static readonly string[] IllegalPathCharacters = { "/", "\\", "?", ":", "|", "<", ">", "*"};
+
         public static readonly Version OSVersion = Environment.OSVersion.Version;
         public static readonly string[] SizeSuffixes = { "bytes", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB" };
 

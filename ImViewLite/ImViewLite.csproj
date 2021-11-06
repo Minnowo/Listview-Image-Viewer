@@ -73,6 +73,12 @@
     </Compile>
     <Compile Include="Controls\ListViewColumnSorter.cs" />
     <Compile Include="Controls\ListViewItemEx.cs" />
+    <Compile Include="Controls\RenameFileForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Controls\RenameFileForm.Designer.cs">
+      <DependentUpon>RenameFileForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Controls\ToolStripClickThrough.cs">
       <SubType>Component</SubType>
     </Compile>
@@ -178,6 +184,9 @@
     <EmbeddedResource Include="Controls\FunctionSelectorForm.resx" />
     <EmbeddedResource Include="Controls\HotkeyControl.resx" />
     <EmbeddedResource Include="Controls\KeyRebind.resx" />
+    <EmbeddedResource Include="Controls\RenameFileForm.resx">
+      <DependentUpon>RenameFileForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Forms\ArgumentSelectionForm.resx">
       <DependentUpon>ArgumentSelectionForm.cs</DependentUpon>
     </EmbeddedResource>

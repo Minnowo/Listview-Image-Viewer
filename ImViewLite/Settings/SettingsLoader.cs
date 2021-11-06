@@ -22,12 +22,7 @@ namespace ImViewLite.Settings
             if(oldIndex > 0)
                 Helper.Move(InternalSettings.SettingProfiles, oldIndex, 0); // put cur profile at 0 for loading 
 
-            for(int i = 0; i < InternalSettings.CurrentUserSettings.Binds.Count; i++)
-            {
-                Console.WriteLine("");
-            }
-
-            using (TextWriter writer = new StreamWriter(InternalSettings.User_Settings_Path))
+            using (TextWriter writer = new StreamWriter(Path.Combine(Program.BaseDirectory, InternalSettings.User_Settings_Path)))
             {
                 serializer.Serialize(writer, InternalSettings.SettingProfiles);
             }

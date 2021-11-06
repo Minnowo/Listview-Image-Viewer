@@ -138,6 +138,24 @@ namespace ImViewLite.Misc
             });
         }
 
+        private void ItemRenamed(object sender, RenamedEventArgs e)
+        {
+            if (FileCache.Remove(e.OldName))
+                OnFileRemoved(e.Name);
+
+            if (DirectoryCache.Remove(e.OldName))
+                OnDirectoryRemoved(e.Name);
+
+            if (File.Exists(e.Name))
+            {
+                InsertProperPositionFile(e.Name);
+            }
+            else if (Directory.Exists(e.Name))
+            {
+                InsertProperPositionDirectory(e.Name);
+            }
+        }
+
         private void FolderChanged(object sender, FileSystemEventArgs e)
         {
             Console.WriteLine(e.ChangeType);
@@ -157,7 +175,6 @@ namespace ImViewLite.Misc
                 // using a timer because i don't want to waste cpu resorting the files if lots of files 
                 // are being created / copied
                 case WatcherChangeTypes.Created:
-                case WatcherChangeTypes.Renamed:
                     if (File.Exists(e.FullPath))
                     {
                         InsertProperPositionFile(e.Name);
@@ -202,7 +219,7 @@ namespace ImViewLite.Misc
             w.Path = path;
             w.IncludeSubdirectories = false;
             w.Created += FolderChanged;
-            w.Renamed += FolderChanged;
+            w.Renamed += ItemRenamed;
             w.Deleted += FolderChanged;
             w.EnableRaisingEvents = enabled;
             watchers.Add(w);
@@ -282,7 +299,7 @@ namespace ImViewLite.Misc
             foreach(FileSystemWatcher fsw in watchers)
             {
                 fsw.Created -= FolderChanged;
-                fsw.Renamed -= FolderChanged;
+                fsw.Renamed -= ItemRenamed;
                 fsw.Deleted -= FolderChanged;
                 fsw.Dispose();
             }
