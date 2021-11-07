@@ -11,6 +11,10 @@ namespace ImViewLite.Controls
 {
     class LISTVIEW : ListView
     {
+        public delegate void RightClickedEvent();
+        public event RightClickedEvent RightClicked;
+
+
         public int NewestSelectedIndex = -1;
         public int OldestSelectedIndex = -1;
         public int SelectedItemsCount = 0;
@@ -69,6 +73,7 @@ namespace ImViewLite.Controls
                     break;
                 case MouseButtons.Right:
                     _IsRightClick = false;
+                    OnRightClick();
                     break;
             }
         }
@@ -96,6 +101,8 @@ namespace ImViewLite.Controls
                 if (SelectedItemsCount != count)
                 {
                     SelectedItemsCount = count;
+                    if (count < 1)
+                        return;
                     if (this.OldestSelectedIndex == this.SelectedIndices[0])
                     {
                         this.NewestSelectedIndex = this.SelectedIndices[SelectedItemsCount - 1];
@@ -153,6 +160,12 @@ namespace ImViewLite.Controls
                     this.NewestSelectedIndex = (this.NewestSelectedIndex - 1).ClampMin(0);
                     break;
             }
+        }
+
+        private void OnRightClick()
+        {
+            if (RightClicked != null)
+                RightClicked();
         }
     }
 }

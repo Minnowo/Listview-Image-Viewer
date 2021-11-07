@@ -44,6 +44,7 @@ namespace ImViewLite
         private ListViewItemEx[] _ListViewItemCache; // array to cache items for the virtual list
         private FolderWatcher _FolderWatcher;
 
+        private Timer _LoadImageTimer = new Timer() { Interval = 50 };
         private Regex _MatchFilePath = new Regex("\"(?<path>[^\"]*)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private bool preventOverflow = false;
         public MainForm()
@@ -79,8 +80,9 @@ namespace ImViewLite
             listView1.ItemActivate += ListView1_ItemActivate;
 
             this.KeyUp += MainForm_KeyUp;
+            _LoadImageTimer.Tick += LoadImageTimer_Tick;
 
-            this.textBox1.Text = "\"D:\\pictures\\Anime\"";
+            this.textBox1.Text = "";
             this.TopMost = InternalSettings.Always_On_Top;
             this.KeyPreview = true;
             ResumeLayout();
@@ -172,11 +174,15 @@ namespace ImViewLite
         /// </summary>
         public void UpDirectoryLevel()
         {
-            DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
-            if (info.Parent != null)
+            try
             {
-                this.UpdateDirectory(info.Parent.FullName, true);
+                DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
+                if (info.Parent != null)
+                {
+                    this.UpdateDirectory(info.Parent.FullName, true);
+                }
             }
+            catch { }
         }
 
         /// <summary>
@@ -218,7 +224,7 @@ namespace ImViewLite
             string newPath = listView1.GetSelectedItem();
             if(newPath != imageDisplay1.ImagePath)
             {
-                imageDisplay1.TryLoadImage(newPath);
+                LoadImage(newPath);
             }
         }
 
@@ -265,16 +271,49 @@ namespace ImViewLite
             }
         }
 
+        public void LoadImage(string path)
+        {
+            FileInfo finfo = new FileInfo(path);
 
+            tsslFileSize.Text = Helper.SizeSuffix(finfo.Length);
+            tsslFilePath.Text = finfo.Name;
+
+            if (imageDisplay1.TryLoadImage(path))
+            {
+                tsslImageSize.Text = $"{imageDisplay1.Image.Width} x {imageDisplay1.Image.Height}";
+            }
+            else if (InternalSettings.Agressive_Image_Unloading)
+            {
+                imageDisplay1.Image = null;
+                tsslImageSize.Text = "0 x 0";
+            }
+        }
+
+        // This variable is basically to pass args to the LoadImageTimer_Tick function
+        // The purpose of the timer function is to prevent lag due to trying to load 50 images very quickly
+        // So the timer puts a delay of 50ms before an image will be loaded, and in that time if another image is loaded
+        // It will load that instead
+        private string _Image_Delay = "";
+        private void DelayLoadImage(string path)
+        {
+            // start the timer and set the queue
+            _LoadImageTimer.Stop();
+            _LoadImageTimer.Start();
+            _Image_Delay = path;
+        }
+
+        private void LoadImageTimer_Tick(object sender, EventArgs e)
+        {
+            // time has passed, stop timer and load the image
+            _LoadImageTimer.Stop();
+            LoadImage(_Image_Delay);
+        }
 
         private void UpdateAfterIndexChanged()
         {
             string path = listView1.GetSelectedItem();
 
             tsslItemOfItems.Text = $"{listView1.SelectedItemsCount} / {listView1.Items.Count} object(s) selected";
-            tsslFileSize.Text = "";
-            tsslFilePath.Text = "";
-            tsslImageSize.Text = "";
 
             if (Directory.Exists(path))
             {
@@ -284,21 +323,11 @@ namespace ImViewLite
                 return;
             }
 
+            // this will be called very very fast if the user drags a selection box over many items
+            // this will prevent a performance hit at the cost of 50ms delay 
             if (File.Exists(path))
             {
-                FileInfo finfo = new FileInfo(path);
-
-                tsslFileSize.Text = Helper.SizeSuffix(finfo.Length);
-                tsslFilePath.Text = finfo.FullName;
-
-                if (imageDisplay1.TryLoadImage(path))
-                {
-                    tsslImageSize.Text = $"{imageDisplay1.Image.Width} x {imageDisplay1.Image.Height}";
-                }
-                else if(InternalSettings.Agressive_Image_Unloading)
-                {
-                    imageDisplay1.Image = null;
-                }
+                DelayLoadImage(path);
             }
 
         }
@@ -455,7 +484,8 @@ namespace ImViewLite
 
         private void TscbInterpolationMode_SelectedIndexChanged(object sender, EventArgs e)
         {
-            imageDisplay1.InterpolationMode = (System.Drawing.Drawing2D.InterpolationMode)tscbInterpolationMode.SelectedItem;
+            InternalSettings.Default_Interpolation_Mode = (System.Drawing.Drawing2D.InterpolationMode)tscbInterpolationMode.SelectedItem;
+            imageDisplay1.InterpolationMode = InternalSettings.Default_Interpolation_Mode;
         }
 
 
@@ -505,6 +535,11 @@ namespace ImViewLite
             this._ListViewItemCache = null;
             if(InternalSettings.Agressive_Image_Unloading)
                 ReloadCurrentImage();
+        }
+
+        private void UpArrowButton_Click(object sender, EventArgs e)
+        {
+            UpDirectoryLevel();
         }
     }
 }

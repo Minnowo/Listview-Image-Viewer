@@ -29,8 +29,8 @@ namespace ImViewLite
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.ListViewGroup listViewGroup3 = new System.Windows.Forms.ListViewGroup("Directories", System.Windows.Forms.HorizontalAlignment.Left);
-            System.Windows.Forms.ListViewGroup listViewGroup4 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Directories", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.scMainContainer = new System.Windows.Forms.SplitContainer();
             this.listView1 = new ImViewLite.Controls.LISTVIEW();
@@ -44,10 +44,10 @@ namespace ImViewLite
             this.tsslSPACE1 = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslFileSize = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslImageSize = new System.Windows.Forms.ToolStripStatusLabel();
+            this.button1 = new System.Windows.Forms.Button();
             this.tseMainToolstrip = new ImViewLite.Controls.ToolStripEx();
             this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.newWindowToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
             this.toolStripDropDownButton3 = new System.Windows.Forms.ToolStripDropDownButton();
             this.toolStripDropDownButton4 = new System.Windows.Forms.ToolStripDropDownButton();
@@ -66,10 +66,10 @@ namespace ImViewLite
             // 
             this.textBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox1.Location = new System.Drawing.Point(0, 25);
+            this.textBox1.Location = new System.Drawing.Point(28, 25);
             this.textBox1.Margin = new System.Windows.Forms.Padding(0);
             this.textBox1.Name = "textBox1";
-            this.textBox1.Size = new System.Drawing.Size(800, 20);
+            this.textBox1.Size = new System.Drawing.Size(772, 20);
             this.textBox1.TabIndex = 1;
             this.textBox1.TextChanged += new System.EventHandler(this.InputTextbox_TextChanged);
             // 
@@ -100,13 +100,13 @@ namespace ImViewLite
             this.chSize,
             this.chPath});
             this.listView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            listViewGroup3.Header = "Directories";
-            listViewGroup3.Name = "Directories";
-            listViewGroup4.Header = "Files";
-            listViewGroup4.Name = "Files";
+            listViewGroup1.Header = "Directories";
+            listViewGroup1.Name = "Directories";
+            listViewGroup2.Header = "Files";
+            listViewGroup2.Name = "Files";
             this.listView1.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup3,
-            listViewGroup4});
+            listViewGroup1,
+            listViewGroup2});
             this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(0, 0);
             this.listView1.Name = "listView1";
@@ -192,6 +192,17 @@ namespace ImViewLite
             this.tsslImageSize.Name = "tsslImageSize";
             this.tsslImageSize.Size = new System.Drawing.Size(0, 17);
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(1, 24);
+            this.button1.Margin = new System.Windows.Forms.Padding(0);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(27, 21);
+            this.button1.TabIndex = 4;
+            this.button1.Text = "/\\";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.UpArrowButton_Click);
+            // 
             // tseMainToolstrip
             // 
             this.tseMainToolstrip.ClickThrough = false;
@@ -211,8 +222,7 @@ namespace ImViewLite
             // 
             this.toolStripDropDownButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripDropDownButton1.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.openToolStripMenuItem,
-            this.newWindowToolStripMenuItem});
+            this.openToolStripMenuItem});
             this.toolStripDropDownButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripDropDownButton1.Name = "toolStripDropDownButton1";
             this.toolStripDropDownButton1.Size = new System.Drawing.Size(38, 22);
@@ -221,16 +231,9 @@ namespace ImViewLite
             // openToolStripMenuItem
             // 
             this.openToolStripMenuItem.Name = "openToolStripMenuItem";
-            this.openToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
+            this.openToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.openToolStripMenuItem.Text = "Open";
             this.openToolStripMenuItem.Click += new System.EventHandler(this.openToolStripMenuItem_Click);
-            // 
-            // newWindowToolStripMenuItem
-            // 
-            this.newWindowToolStripMenuItem.Name = "newWindowToolStripMenuItem";
-            this.newWindowToolStripMenuItem.Size = new System.Drawing.Size(145, 22);
-            this.newWindowToolStripMenuItem.Text = "New Window";
-            this.newWindowToolStripMenuItem.Click += new System.EventHandler(this.newWindowToolStripMenuItem_Click);
             // 
             // toolStripDropDownButton2
             // 
@@ -284,6 +287,7 @@ namespace ImViewLite
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.scMainContainer);
             this.Controls.Add(this.textBox1);
@@ -320,7 +324,6 @@ namespace ImViewLite
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton3;
         private System.Windows.Forms.ToolStripDropDownButton toolStripDropDownButton4;
         private System.Windows.Forms.ToolStripMenuItem openToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem newWindowToolStripMenuItem;
         private System.Windows.Forms.ToolStripStatusLabel tsslFileSize;
         private System.Windows.Forms.ToolStripStatusLabel tsslFilePath;
         private System.Windows.Forms.ToolStripStatusLabel tsslSPACE1;
@@ -329,6 +332,7 @@ namespace ImViewLite
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
         private System.Windows.Forms.ToolStripComboBox tscbInterpolationMode;
         private System.Windows.Forms.ToolStripButton tsbSettings;
+        private System.Windows.Forms.Button button1;
     }
 }
 
