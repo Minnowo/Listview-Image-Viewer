@@ -93,17 +93,15 @@ namespace ImViewLite.Forms
             }
         }
 
-        public int GetNumberOfArgs(Command cmd) 
+        public static int GetNumberOfArgs(Command cmd) 
         {
             switch (cmd)
             {
-                case Command.UpDirectoryLevel:
                 case Command.MoveImage:
-                case Command.RenameImage:
+                case Command.OpenSelectedDirectory:
                     return 1;
                 case Command.Nothing:
                 case Command.CopyImage:
-                case Command.OpenSelectedDirectory:
                 case Command.PauseGif:
                 case Command.NextFrame:
                 case Command.PreviousFrame:
@@ -113,6 +111,10 @@ namespace ImViewLite.Forms
                 case Command.Grayscale:
                 case Command.OpenColorPicker:
                 case Command.OpenSettings:
+                case Command.OpenWithDefaultProgram:
+                case Command.OpenExplorerAtLocation:
+                case Command.RenameImage:
+                case Command.UpDirectoryLevel:
                     return 0;
             }
             return 0;

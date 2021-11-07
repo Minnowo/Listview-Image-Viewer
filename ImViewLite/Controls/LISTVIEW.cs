@@ -28,7 +28,7 @@ namespace ImViewLite.Controls
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.EnableNotifyMessage, true);
         }
         
-        public string GetSelectedItem()
+        public string GetSelectedItemText2()
         {
             if (NewestSelectedIndex == -1)
                 return string.Empty;
@@ -44,7 +44,7 @@ namespace ImViewLite.Controls
             LastSelectedItem = e.Item;
             NewestSelectedIndex = e.ItemIndex;
             OldestSelectedIndex = e.ItemIndex;
-
+            Console.WriteLine("item changed");
             base.OnItemSelectionChanged(e);    
         }
 

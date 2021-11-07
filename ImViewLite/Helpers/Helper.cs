@@ -220,44 +220,9 @@ namespace ImViewLite.Helpers
             return GetRandomString(text, length);
         }
 
-        public static bool IsValidFilePath(string path)
-        {
-            try
-            {
-                new FileInfo(path);
-                return true;
-            }
-            catch 
-            {
-                return false;
-            }
-        }
+        
 
-        /// <summary>
-        /// Opens explorer at the given file or directory.
-        /// </summary>
-        /// <param name="path">The path to open.</param>
-        /// <returns></returns>
-        public static bool OpenExplorerAtLocation(string path)
-        {
-            if (File.Exists(path))
-            {
-                Process fileopener = new Process();
-                fileopener.StartInfo.FileName = "explorer";
-                fileopener.StartInfo.Arguments = string.Format("/select,\"{0}\"", path);
-                fileopener.Start();
-                return true;
-            }
-            else if (Directory.Exists(path))
-            {
-                Process fileopener = new Process();
-                fileopener.StartInfo.FileName = "explorer";
-                fileopener.StartInfo.Arguments = path;
-                fileopener.Start();
-                return true;
-            }
-            return false;
-        }
+        
 
         /// <summary>
         /// Removes file attribute from the given file attributes.

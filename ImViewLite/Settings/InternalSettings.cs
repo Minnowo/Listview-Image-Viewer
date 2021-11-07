@@ -149,22 +149,47 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.Fill_Transparency_On_Copy_Color = value; }
         }
 
-        public static bool CenterChild_When_Parent_Following_Child
-        {
-            get { return CurrentUserSettings.CenterChild_When_Parent_Following_Child; }
-            set { CurrentUserSettings.CenterChild_When_Parent_Following_Child = value; }
-        }
-        public static bool Parent_Follow_Child
-        {
-            get { return CurrentUserSettings.Parent_Follow_Child; }
-            set { CurrentUserSettings.Parent_Follow_Child = value; }
-        }
-
         public static bool Full_Row_Select
         {
             get { return CurrentUserSettings.Full_Row_Select; }
             set { CurrentUserSettings.Full_Row_Select = value; }
         }
+
+        public static bool Ask_Delete_Confirmation_Single
+        {
+            get { return CurrentUserSettings.Ask_Delete_Confirmation_Single; }
+            set { CurrentUserSettings.Ask_Delete_Confirmation_Single = value; }
+        }
+        public static bool Ask_Delete_Confirmation_Multiple
+        {
+            get { return CurrentUserSettings.Ask_Delete_Confirmation_Multiple; }
+            set { CurrentUserSettings.Ask_Delete_Confirmation_Multiple = value; }
+        }
+
+        public static bool Ask_Rename_Multiple_Files
+        {
+            get { return CurrentUserSettings.Ask_Rename_Multiple_Files; }
+            set { CurrentUserSettings.Ask_Rename_Multiple_Files = value; }
+        }
+
+        public static int Image_Delay_Load_Time
+        {
+            get { return CurrentUserSettings.Image_Delay_Load_Time; }
+            set { CurrentUserSettings.Image_Delay_Load_Time = value; }
+        }
+
+        public static bool Ask_Open_Multiple_Files
+        {
+            get { return CurrentUserSettings.Ask_Open_Multiple_Files; }
+            set { CurrentUserSettings.Ask_Open_Multiple_Files = value; }
+        }
+
+        public static bool Ask_Open_Multiple_Files_In_Explorer
+        {
+            get { return CurrentUserSettings.Ask_Open_Multiple_Files_In_Explorer; }
+            set { CurrentUserSettings.Ask_Open_Multiple_Files_In_Explorer = value; }
+        }
+
 
         // because of how we load the image there is extra memory that doesn't get disposed
         // and calling GC.Collect removes that, but since garbage collection can cause problems
@@ -176,10 +201,10 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.Garbage_Collect_On_Image_Unload = value; }
         }
 
-        public static bool Garbage_Collect_After_Disposing_Gif
+        public static bool Garbage_Collect_On_Directory_Changed
         {
-            get { return CurrentUserSettings.Garbage_Collect_After_Disposing_Gif; }
-            set { CurrentUserSettings.Garbage_Collect_After_Disposing_Gif = value; }
+            get { return CurrentUserSettings.Garbage_Collect_On_Directory_Changed; }
+            set { CurrentUserSettings.Garbage_Collect_On_Directory_Changed = value; }
         }
 
         public static bool Delete_Temp_Directory
@@ -360,12 +385,28 @@ namespace ImViewLite.Settings
 
         [Description("Should the garbage collecter be called after a gif is disposed."), DisplayName("Garbage Collect After Gif Dispose")]
         public bool Garbage_Collect_After_Disposing_Gif { get; set; } = true;
-
-   
+        
+        [DisplayName("Garbage Collect After Directory Change")]
+        public bool Garbage_Collect_On_Directory_Changed { get; set; } = true;
 
         [Description("Should the tmp directory be deleted when the application closes."), DisplayName("Delete Temp Dir On Exit")]
         public bool Delete_Temp_Directory_On_Close { get; set; } = true;
 
+
+        [DisplayName("Confirm Delete Multiple Files")]
+        public bool Ask_Delete_Confirmation_Multiple { get; set; } = true;
+
+        [DisplayName("Confirm Delete Single Files")]
+        public bool Ask_Delete_Confirmation_Single { get; set; } = true;
+
+        [DisplayName("Confirm Rename Multiple Files")]
+        public bool Ask_Rename_Multiple_Files { get; set; } = true;
+
+        [DisplayName("Confirm Open Multiple Files")]
+        public bool Ask_Open_Multiple_Files { get; set; } = true; 
+
+        [DisplayName("Confirm Open Multiple Files In Explorer")]
+        public bool Ask_Open_Multiple_Files_In_Explorer { get; set; } = true;
 
         [Description("Should the mainform be a topmost window."), DisplayName("Always On Top")]
         public bool Always_On_Top { get; set; } = false;
@@ -375,12 +416,6 @@ namespace ImViewLite.Settings
         public bool Full_Row_Select { get; set; } = false;
 
 
-        [Description("Should the parent window follow children that take control."), DisplayName("Parent Follow Children")]
-        public bool Parent_Follow_Child { get; set; } = true;
-
-
-        [Description("Should the child window be centered on the parent when parent following child."), DisplayName("Center Child When Parent Following")]
-        public bool CenterChild_When_Parent_Following_Child { get; set; } = true;
 
         [Description("Should the parent window follow children that take control."), DisplayName("Agressive Image Unload")]
         public bool Agressive_Image_Unloading { get; set; } = true;
@@ -414,6 +449,10 @@ namespace ImViewLite.Settings
         [Browsable(false)]
         [XmlIgnore]
         private bool replace_Transparency_On_Copy = false;
+
+
+        [DisplayName("Image Load Time (ms)")]
+        public int Image_Delay_Load_Time { get; set; } = 50;
 
 
 

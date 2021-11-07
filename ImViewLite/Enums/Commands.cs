@@ -24,5 +24,7 @@ namespace ImViewLite.Enums
         Grayscale,
         OpenColorPicker,
         OpenSettings,
+        OpenWithDefaultProgram,
+        OpenExplorerAtLocation,
     }
 }

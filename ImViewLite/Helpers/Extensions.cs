@@ -16,8 +16,6 @@ namespace ImViewLite.Helpers
     public static class Extensions
     {
 
-        #region string Extensions
-
         public static string Truncate(this string str, int maxLength)
         {
             if (!string.IsNullOrEmpty(str) && str.Length > maxLength)
@@ -27,24 +25,6 @@ namespace ImViewLite.Helpers
 
             return str;
         }
-
-        public static string[] OnlyValidFiles(this string[] str)
-        {
-            if (str == null || str.Length < 1)
-                return null;
-            List<string> newA = new List<string>();
-
-            foreach(string path in str)
-            {
-                if (!Helper.IsValidFilePath(path) || !File.Exists(path))
-                    continue;
-
-                newA.Add(new FileInfo(path).FullName); // force absolute paths
-            }
-            return newA.ToArray();
-        }
-
-        #endregion
 
         #region Bitmap / Image Extensions
 
@@ -63,19 +43,6 @@ namespace ImViewLite.Helpers
 
         #endregion
 
-        #region byte[] Extensions
-
-        public static string ReturnStrHash(this byte[] crypto)
-        {
-            StringBuilder hash = new StringBuilder();
-            foreach (byte theByte in crypto)
-            {
-                hash.Append(theByte.ToString("x2"));
-            }
-            return hash.ToString();
-        }
-
-        #endregion
 
         
 

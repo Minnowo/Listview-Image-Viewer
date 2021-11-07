@@ -27,6 +27,8 @@ namespace ImViewLite.Enums
                 case Command.ToggleAlwaysOnTop:return "Toggle Always On Top";
                 case Command.OpenColorPicker:  return "Open Color Picker";
                 case Command.OpenSettings: return "Open Settings";
+                case Command.OpenWithDefaultProgram: return "Open With Default Program";
+                case Command.OpenExplorerAtLocation: return "Open Explorer At Location";
             }
             return string.Empty;
         }

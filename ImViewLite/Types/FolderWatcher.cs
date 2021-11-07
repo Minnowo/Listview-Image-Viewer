@@ -24,6 +24,12 @@ namespace ImViewLite.Misc
         public delegate void DirectoryRemovedEvent(string name);
         public event DirectoryRemovedEvent DirectoryRemoved;
 
+        public delegate void FileRenamedEvent(string newName, string oldName);
+        public event FileRenamedEvent FileRenamed;
+
+        public delegate void DirectoryRenamedEvent(string newName, string oldName);
+        public event DirectoryRenamedEvent DirectoryRenamed;
+
         public string CurrentDirectory
         {
             get
@@ -66,14 +72,14 @@ namespace ImViewLite.Misc
 
         private int GetMaxFileLength()
         {
-            WaitSortFinish(true);
+            WaitThreadsFinished(true);
 
             return FileCache.Aggregate("", (max, cur) => max.Length > cur.Length ? max : cur).Length;
         }
 
         private int GetMaxDirectoryLength()
         {
-            WaitSortFinish(false);
+            WaitThreadsFinished(false);
 
             return DirectoryCache.Aggregate("", (max, cur) => max.Length > cur.Length ? max : cur).Length;
         }
@@ -81,7 +87,7 @@ namespace ImViewLite.Misc
         /// <summary>
         /// blocks the thread until the Sortthread is completed
         /// </summary>
-        private void WaitSortFinish(bool isFileThread)
+        public void WaitThreadsFinished(bool isFileThread)
         {
             if (isFileThread)
             {
@@ -99,19 +105,24 @@ namespace ImViewLite.Misc
             }
         }
 
-        private void WaitSortFinish()
+        public void WaitThreadsFinished()
         {
-            WaitSortFinish(true);
-            WaitSortFinish(false);
+            WaitThreadsFinished(true);
+            WaitThreadsFinished(false);
         }
 
 
         private void InsertProperPositionFile(string name)
         {
+            if (string.IsNullOrEmpty(name))
+                return;
             FileSortThread = Task.Run(() => {
                 int i;
                 for (i = 0; i < FileCache.Count; i++)
                 {
+                    if (string.IsNullOrEmpty(FileCache[i]))
+                        continue;
+
                     if (Helper.StringCompareNatural(FileCache[i], name) >= 0)
                     {
                         break;
@@ -140,19 +151,41 @@ namespace ImViewLite.Misc
 
         private void ItemRenamed(object sender, RenamedEventArgs e)
         {
+            WaitThreadsFinished();
+            int fileRenamed = 0;
+            int directoryRenamed = 0;
+
             if (FileCache.Remove(e.OldName))
+            {
                 OnFileRemoved(e.Name);
+                fileRenamed++;
+            }
 
             if (DirectoryCache.Remove(e.OldName))
+            {
                 OnDirectoryRemoved(e.Name);
+                directoryRenamed++;
+            }
 
             if (File.Exists(e.Name))
             {
                 InsertProperPositionFile(e.Name);
+                fileRenamed++;
             }
-            else if (Directory.Exists(e.Name))
+            if (Directory.Exists(e.Name))
             {
                 InsertProperPositionDirectory(e.Name);
+                directoryRenamed++;
+            }
+
+            if (fileRenamed == 2)
+            {
+                OnFileRenamed(e.Name, e.OldName);
+            }
+
+            if(directoryRenamed == 2)
+            {
+                OnDirectoryRenamed(e.Name, e.OldName);
             }
         }
 
@@ -163,19 +196,24 @@ namespace ImViewLite.Misc
             {
                 // no need to remove from list we will check if the file exists when fetching
                 case WatcherChangeTypes.Deleted:
-                    WaitSortFinish();
+                    WaitThreadsFinished();
 
                     if (FileCache.Remove(e.Name))
+                    {
                         OnFileRemoved(e.Name);
+                    }
 
                     if (DirectoryCache.Remove(e.Name))
+                    {
                         OnDirectoryRemoved(e.Name);
+                    }
+                    
                     break;
 
                 // using a timer because i don't want to waste cpu resorting the files if lots of files 
                 // are being created / copied
                 case WatcherChangeTypes.Created:
-                    if (File.Exists(e.FullPath))
+                    if (File.Exists(e.Name))
                     {
                         InsertProperPositionFile(e.Name);
                     }
@@ -189,7 +227,7 @@ namespace ImViewLite.Misc
 
         private void SetFiles(string path)
         {
-            WaitSortFinish();
+            WaitThreadsFinished();
 
             FileSortThread = Task.Run(() => 
             {
@@ -237,19 +275,19 @@ namespace ImViewLite.Misc
 
         public int GetTotalCount()
         {
-            WaitSortFinish();
+            WaitThreadsFinished();
             return FileCache.Count + DirectoryCache.Count;
         }
 
         public int GetFileCount()
         {
-            WaitSortFinish();
+            WaitThreadsFinished();
             return FileCache.Count;
         }
 
         public int GetDirectoryCount()
         {
-            WaitSortFinish();
+            WaitThreadsFinished();
             return DirectoryCache.Count();
         }
 
@@ -259,7 +297,7 @@ namespace ImViewLite.Misc
 
             if (!Directory.Exists(path))
             {
-                WaitSortFinish();
+                WaitThreadsFinished();
                 UpdateWatchers(path, false);
                 DirectoryCache.Clear();
                 FileCache.Clear();
@@ -294,6 +332,18 @@ namespace ImViewLite.Misc
                 DirectoryRemoved.Invoke(name);
         }
 
+        private void OnFileRenamed(string newName, string oldName)
+        {
+            if (FileRenamed != null)
+                FileRenamed.Invoke(newName, oldName);
+        }
+
+        private void OnDirectoryRenamed(string newName, string oldName)
+        {
+            if (DirectoryRenamed != null)
+                DirectoryRenamed.Invoke(newName, oldName);
+        }
+
         public void Dispose()
         {
             foreach(FileSystemWatcher fsw in watchers)
@@ -306,7 +356,7 @@ namespace ImViewLite.Misc
 
             this.watchers.Clear();
             
-            WaitSortFinish();
+            WaitThreadsFinished();
             
             this.FileCache.Clear();
             this.FileSortThread?.Dispose();

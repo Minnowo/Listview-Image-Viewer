@@ -46,7 +46,8 @@ namespace ImViewLite
 
         private Timer _LoadImageTimer = new Timer() { Interval = 50 };
         private Regex _MatchFilePath = new Regex("\"(?<path>[^\"]*)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-        private bool preventOverflow = false;
+        private bool _IsUsingTextbox = false;
+        private bool _PreventOverflow = false;
         public MainForm()
         {
             InitializeComponent();
@@ -68,6 +69,8 @@ namespace ImViewLite
             _FolderWatcher.DirectoryRemoved += _FolderWatcher_DirectoryRemoved;
             _FolderWatcher.FileAdded += _FolderWatcher_FileAdded;
             _FolderWatcher.DirectoryAdded += _FolderWatcher_DirectoryAdded;
+            _FolderWatcher.FileRenamed += _FolderWatcher_FileRenamed;
+            _FolderWatcher.DirectoryRenamed += _FolderWatcher_DirectoryRenamed;
 
             this.listView1.VirtualMode = true;
             this.listView1.VirtualListSize = 0;
@@ -78,15 +81,19 @@ namespace ImViewLite
             listView1.CacheVirtualItems += new CacheVirtualItemsEventHandler(listView1_CacheVirtualItems);
             listView1.SelectedIndexChanged += ListView1_SelectedIndexChanged;
             listView1.ItemActivate += ListView1_ItemActivate;
+            listView1.RightClicked += ListView1_RightClicked;
 
             this.KeyUp += MainForm_KeyUp;
             _LoadImageTimer.Tick += LoadImageTimer_Tick;
 
-            this.textBox1.Text = "";
+            this.textBox1.Text = "\"D:\\Pictures\\tmp\\\"";
             this.TopMost = InternalSettings.Always_On_Top;
             this.KeyPreview = true;
             ResumeLayout();
         }
+
+        
+
 
         /// <summary>
         /// Updates variables on the mainfrom which reference the InternalSettings class
@@ -118,7 +125,12 @@ namespace ImViewLite
             _FolderWatcher.UpdateDirectory(path);
             Console.WriteLine(_FolderWatcher.CurrentDirectory);
             this.listView1.VirtualListSize = _FolderWatcher.GetTotalCount();
-            this._ListViewItemCache = null;
+            this._ListViewItemCache = new ListViewItemEx[] { };
+
+            if (InternalSettings.Agressive_Image_Unloading)
+            {
+                this.ReloadCurrentImage();
+            }
 
             this.listView1.Invalidate();
             GC.Collect();
@@ -134,7 +146,7 @@ namespace ImViewLite
             if (!Directory.Exists(path))
                 return;
             
-            this.preventOverflow = true;
+            this._PreventOverflow = true;
             path = new DirectoryInfo(path).FullName;
 
             if (path[path.Length - 1] != '\\')
@@ -146,7 +158,7 @@ namespace ImViewLite
             {
                 this.textBox1.Text = $"\"{path}\"";
             }
-            this.preventOverflow = false;
+            this._PreventOverflow = false;
         }
 
         /// <summary>
@@ -174,15 +186,18 @@ namespace ImViewLite
         /// </summary>
         public void UpDirectoryLevel()
         {
-            try
+            if (!PathHelper.IsValidDirectoryPath(this.CurrentDirectory))
+                return;
+            
+            DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
+            if (info.Parent != null)
             {
-                DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
-                if (info.Parent != null)
+                this.UpdateDirectory(info.Parent.FullName, true);
+                if (InternalSettings.Agressive_Image_Unloading)
                 {
-                    this.UpdateDirectory(info.Parent.FullName, true);
+                    this.ReloadCurrentImage();
                 }
             }
-            catch { }
         }
 
         /// <summary>
@@ -219,23 +234,208 @@ namespace ImViewLite
             cpf.Show();
         }
 
+        public void DeleteFile(string path)
+        {
+            if (InternalSettings.Ask_Delete_Confirmation_Single)
+            {
+                if (MessageBox.Show(this, 
+                    $"Are you sure you want to delete this item?\n{path}", 
+                    "Delete File?", 
+                    MessageBoxButtons.YesNo) == DialogResult.No)
+                    return;
+            }
+            PathHelper.DeleteFileOrPath(path);
+        }
+
         public void ReloadCurrentImage()
         {
-            string newPath = listView1.GetSelectedItem();
+            string newPath = listView1.GetSelectedItemText2();
             if(newPath != imageDisplay1.ImagePath)
             {
                 LoadImage(newPath);
             }
         }
 
+        public void DeleteSelectedItems()
+        {
+            if (listView1.SelectedIndices.Count > 1)
+            {
+                if (InternalSettings.Ask_Delete_Confirmation_Multiple)
+                {
+                    if (MessageBox.Show(this,
+                        $"Are you sure you want to delete {listView1.SelectedIndices.Count} items?\n",
+                        "Delete Files?",
+                        MessageBoxButtons.YesNo) == DialogResult.No)
+                        return;
+                }
+
+                bool tmp = InternalSettings.Ask_Delete_Confirmation_Single;
+                InternalSettings.Ask_Delete_Confirmation_Single = false;
+
+                foreach (int i in listView1.SelectedIndices)
+                {
+                    DeleteFile(listView1.Items[i].SubItems[2].Text);
+                }
+                InternalSettings.Ask_Delete_Confirmation_Single = tmp;
+                return;
+            }
+
+            if (listView1.FocusedItem != null)
+            {
+                DeleteFile(listView1.FocusedItem.SubItems[2].Text);
+            }
+        }
+
+        public void RenameSelectedItems()
+        {
+            if (listView1.SelectedIndices.Count > 1)
+            {
+                DialogResult dr;
+                if (InternalSettings.Ask_Rename_Multiple_Files)
+                {
+                    dr = MessageBox.Show(
+                        this,
+                        "You are trying to rename multiple files\nWould you like to rename all files?",
+                        "Rename Multiple Or Single",
+                        MessageBoxButtons.YesNoCancel);
+                }
+                else
+                {
+                    dr = DialogResult.Yes;
+                }
+
+                if (dr == DialogResult.Cancel)
+                {
+                    return;
+                }
+
+                if (dr == DialogResult.Yes)
+                {
+                    foreach (int i in listView1.SelectedIndices)
+                    {
+                        RenameFileForm.RenamePath(listView1.Items[i].SubItems[2].Text);
+                    }
+                    return;
+                }
+            }
+
+            if (listView1.FocusedItem != null)
+            {
+                RenameFileForm.RenamePath(listView1.FocusedItem.SubItems[2].Text);
+            }
+        }
+
+        public void OpenSelectedItems()
+        {
+            if (listView1.SelectedIndices.Count > 1)
+            {
+                DialogResult dr;
+                if (InternalSettings.Ask_Open_Multiple_Files)
+                {
+                    dr = MessageBox.Show(
+                        this,
+                        $"You are trying to open {listView1.SelectedIndices.Count} files\nAre you sure you want to open all of them?",
+                        "Open Multiple Or Single",
+                        MessageBoxButtons.YesNoCancel);
+                }
+                else
+                {
+                    dr = DialogResult.Yes;
+                }
+
+                if (dr == DialogResult.Cancel)
+                {
+                    return;
+                }
+
+                if (dr == DialogResult.Yes)
+                {
+                    foreach (int i in listView1.SelectedIndices)
+                    {
+                        string p = listView1.Items[i].SubItems[2].Text;
+
+                        if (File.Exists(p))
+                        {
+                            PathHelper.OpenWithDefaultProgram(p);
+                        }
+                        else if (Directory.Exists(p))
+                        {
+                            PathHelper.OpenExplorerAtLocation(p);
+                        }
+                    }
+                    return;
+                } 
+            }
+
+            if (listView1.FocusedItem != null)
+            {
+                PathHelper.OpenWithDefaultProgram(listView1.FocusedItem.SubItems[2].Text);
+            }
+        }
+
+        public void OpenExplorerAtSelectedItems()
+        {
+            if (listView1.SelectedIndices.Count > 1)
+            {
+                DialogResult dr;
+                if (InternalSettings.Ask_Open_Multiple_Files_In_Explorer)
+                {
+                    dr = MessageBox.Show(
+                        this,
+                        $"You are trying to open {listView1.SelectedIndices.Count} with explorer\nAre you sure you want to open all of them?",
+                        "Open Multiple Or Single",
+                        MessageBoxButtons.YesNoCancel);
+                }
+                else
+                {
+                    dr = DialogResult.Yes;
+                }
+
+                if (dr == DialogResult.Cancel)
+                {
+                    return;
+                }
+
+                if (dr == DialogResult.Yes)
+                {
+                    foreach (int i in listView1.SelectedIndices)
+                    {
+                        PathHelper.OpenExplorerAtLocation(listView1.Items[i].SubItems[2].Text);
+                    }
+                    return;
+                }
+            }
+
+            if (listView1.FocusedItem != null)
+            {
+                PathHelper.OpenExplorerAtLocation(listView1.FocusedItem.SubItems[2].Text);
+            }
+        }
+
+        public void ExecuteCommand(Command cmd, string arg)
+        {
+            ExecuteCommand(cmd, new string[] { arg });
+        }
+
         /// <summary>
         /// Executes a command. This is used for when a user presses keybinds.
+        /// Args[0] should almost always be a file path
         /// </summary>
         /// <param name="cmd">The command to run.</param>
         /// <param name="args">The arguments for the command.</param>
         public void ExecuteCommand(Command cmd, string[] args = null)
         {
-            string path = listView1.GetSelectedItem();
+            string path;
+
+            if(args != null && args.Length > 0)
+            {
+                path = args[0];
+            }
+            else
+            {
+                path = listView1.GetSelectedItemText2();
+            }
+
             switch (cmd)
             {
                 case Command.Nothing:               break;
@@ -248,11 +448,13 @@ namespace ImViewLite
                 case Command.UpDirectoryLevel:      UpDirectoryLevel(); break;
                 case Command.OpenSelectedDirectory: UpdateDirectory(path, true); break;
                 case Command.MoveImage:             MoveImage(path, args); break;
-                case Command.RenameImage:           RenameFileForm.RenamePath(path); break;
-                case Command.DeleteImage:           PathHelper.DeleteFileOrPath(path); break;
+                case Command.RenameImage:           RenameSelectedItems(); break;
+                case Command.DeleteImage:           DeleteSelectedItems(); break;
                 case Command.ToggleAlwaysOnTop:     ToggleAlwaysOnTop(); break;
                 case Command.OpenColorPicker:       OpenColorPicker(); break;
                 case Command.OpenSettings:          OpenSettings(); break;
+                case Command.OpenWithDefaultProgram:OpenSelectedItems(); break;
+                case Command.OpenExplorerAtLocation:OpenExplorerAtSelectedItems(); break;
             }
         }
 
@@ -263,6 +465,7 @@ namespace ImViewLite
         {
             base.OnKeyDown(e);
             
+            if(!_IsUsingTextbox)
             if (InternalSettings.CurrentUserSettings.Binds.ContainsKey(e.KeyData))
             {
                 ExecuteCommand(
@@ -273,7 +476,16 @@ namespace ImViewLite
 
         public void LoadImage(string path)
         {
+            if (!PathHelper.IsValidFilePath(path))
+                return;
+
             FileInfo finfo = new FileInfo(path);
+
+            if (!finfo.Exists)
+            {
+                imageDisplay1.Image = null;
+                return;
+            }
 
             tsslFileSize.Text = Helper.SizeSuffix(finfo.Length);
             tsslFilePath.Text = finfo.Name;
@@ -311,7 +523,7 @@ namespace ImViewLite
 
         private void UpdateAfterIndexChanged()
         {
-            string path = listView1.GetSelectedItem();
+            string path = listView1.GetSelectedItemText2();
 
             tsslItemOfItems.Text = $"{listView1.SelectedItemsCount} / {listView1.Items.Count} object(s) selected";
 
@@ -334,7 +546,7 @@ namespace ImViewLite
 
         private void ListView1_ItemActivate(object sender, EventArgs e)
         {
-            if (preventOverflow || listView1.NewestSelectedIndex == -1)
+            if (_PreventOverflow || listView1.NewestSelectedIndex == -1)
                 return;
             UpdateDirectory(listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text, true);
         }
@@ -378,7 +590,14 @@ namespace ImViewLite
                 FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
                 ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
                 //fitem.SelectionChanged += ListViewItem_Click;
-                fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                /*if (finfo.Exists)
+                {*/
+                    fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                /*}
+                else
+                {
+                    fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
+                }*/
                 fitem.SubItems.Add(finfo.FullName);
 
                 e.Item = fitem;
@@ -413,6 +632,7 @@ namespace ImViewLite
             // start and ends in directory cache
             if (end < dirCount)
             {
+                _FolderWatcher.WaitThreadsFinished(false);
                 for (int index = start; index <= end; index++)
                 {
                     DirectoryInfo dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[index]);
@@ -430,6 +650,7 @@ namespace ImViewLite
             // starts in directory cache, ends in file cache
             if (start < dirCount)
             {
+                _FolderWatcher.WaitThreadsFinished(false);
                 for (int index = start; index < _FolderWatcher.DirectoryCache.Count; index++)
                 {
                     DirectoryInfo dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[index]);
@@ -442,6 +663,7 @@ namespace ImViewLite
                     count++;
                 }
 
+                _FolderWatcher.WaitThreadsFinished(false);
                 for (int index = 0; count < length; index++)
                 {
                     FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
@@ -457,6 +679,7 @@ namespace ImViewLite
                 return;
             }
 
+            _FolderWatcher.WaitThreadsFinished(true);
             // starts and ends in file cache
             for (int index = start - dirCount; count < length; index++)
             {
@@ -482,6 +705,17 @@ namespace ImViewLite
 
         }
 
+        private void ListView1_RightClicked()
+        {
+            if (listView1.FocusedItem == null)
+                return;
+
+            if (listView1.SelectedIndices.Count < 0)
+                return;
+
+            contextMenuStrip1.Show(Cursor.Position);
+        }
+
         private void TscbInterpolationMode_SelectedIndexChanged(object sender, EventArgs e)
         {
             InternalSettings.Default_Interpolation_Mode = (System.Drawing.Drawing2D.InterpolationMode)tscbInterpolationMode.SelectedItem;
@@ -491,7 +725,7 @@ namespace ImViewLite
 
         private void InputTextbox_TextChanged(object sender, EventArgs e)
         {
-            if (preventOverflow)
+            if (_PreventOverflow)
                 return;
 
             string text = textBox1.Text;
@@ -514,25 +748,38 @@ namespace ImViewLite
         private void _FolderWatcher_DirectoryAdded(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
-            this._ListViewItemCache = null;
         }
 
         private void _FolderWatcher_FileAdded(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
-            this._ListViewItemCache = null;
         }
 
         private void _FolderWatcher_DirectoryRemoved(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            this._ListViewItemCache = null;
+
+            if (InternalSettings.Agressive_Image_Unloading)
+                ReloadCurrentImage();
+        }
+
+        private void _FolderWatcher_DirectoryRenamed(string newName, string oldName)
+        {
+            // because the rename in the FolderWatcher class removes and adds the new / old name in the same function
+            // the listview doesn't pull new items from the cache, but uses the old cache
+            // so we need to clear the cache to force the newly renamed items to appear 
+            this._ListViewItemCache = new ListViewItemEx[] { };
+        }
+
+        private void _FolderWatcher_FileRenamed(string newName, string oldName)
+        {
+            this._ListViewItemCache = new ListViewItemEx[] { };
         }
 
         private void _FolderWatcher_FileRemoved(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            this._ListViewItemCache = null;
+            
             if(InternalSettings.Agressive_Image_Unloading)
                 ReloadCurrentImage();
         }
@@ -541,5 +788,52 @@ namespace ImViewLite
         {
             UpDirectoryLevel();
         }
+
+        private void deleteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            DeleteSelectedItems();
+        }
+
+        private void renameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            RenameSelectedItems();
+        }
+
+        private void openToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            OpenSelectedItems();
+        }
+
+        private void openWithDefaultProgramToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenSelectedItems();
+        }
+
+        private void openInExplorerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenExplorerAtSelectedItems();
+        }
+
+        private void cutToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void copyToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox1_Enter(object sender, EventArgs e)
+        {
+            _IsUsingTextbox = true;
+        }
+
+        private void textBox1_Leave(object sender, EventArgs e)
+        {
+            _IsUsingTextbox = false;
+        }
+
+        
     }
 }

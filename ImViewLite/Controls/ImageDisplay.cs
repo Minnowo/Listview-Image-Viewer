@@ -142,6 +142,10 @@ namespace ImViewLite.Controls
                 if (DisposeImageOnReplace)
                 {
                     this._Image?.Dispose();
+                    if (Settings.InternalSettings.Garbage_Collect_On_Image_Unload)
+                    {
+                        GC.Collect();
+                    }
                 }
                 this._Image = value;
                 Invalidate();
