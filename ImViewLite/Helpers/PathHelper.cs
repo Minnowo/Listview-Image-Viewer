@@ -40,13 +40,12 @@ namespace ImViewLite.Helpers
                 }
                 if (Directory.Exists(path))
                 {
-                    Directory.Delete(path);
+                    Directory.Delete(path, true);
                     return true;
                 }
             }
             catch
             {
-                return false;
             }
             return false;
         }

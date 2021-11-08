@@ -48,6 +48,7 @@ namespace ImViewLite
         private Timer _LoadImageTimer = new Timer() { Interval = 50 };
         private Regex _MatchFilePath = new Regex("\"(?<path>[^\"]*)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private bool _IsUsingTextbox = false;
+        private bool _PreventIndexError = false;
         private bool _PreventOverflow = false;
         public MainForm()
         {
@@ -95,7 +96,10 @@ namespace ImViewLite
             LoadDirectory("");
         }
 
-        
+        public void RefreshListView()
+        {
+            this._ListViewItemCache = new ListViewItemEx[] { };
+        }
 
 
         /// <summary>
@@ -136,7 +140,7 @@ namespace ImViewLite
             _FolderWatcher.UpdateDirectory(path);
             Console.WriteLine(_FolderWatcher.CurrentDirectory);
             this.listView1.VirtualListSize = _FolderWatcher.GetTotalCount();
-            this._ListViewItemCache = new ListViewItemEx[] { };
+            RefreshListView();
 
             if (InternalSettings.Agressive_Image_Unloading)
             {
@@ -404,7 +408,7 @@ namespace ImViewLite
             {
                 DeleteFile(listView1.FocusedItem.SubItems[2].Text);
             }
-        }
+        }   
 
         public void RenameSelectedItems()
         {
@@ -612,8 +616,6 @@ namespace ImViewLite
         }
 
 
-
-
         private void MainForm_KeyUp(object sender, KeyEventArgs e)
         {
             base.OnKeyDown(e);
@@ -728,6 +730,7 @@ namespace ImViewLite
             {
                 if (e.ItemIndex < _FolderWatcher.DirectoryCache.Count)
                 {
+                    _FolderWatcher.WaitThreadsFinished(false);
                     DirectoryInfo dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[e.ItemIndex]);
                     ListViewItemEx ditem = new ListViewItemEx(dinfo.Name);
                     //ditem.SelectionChanged += ListViewItem_Click;
@@ -737,6 +740,7 @@ namespace ImViewLite
                     e.Item = ditem;
                     return;
                 }
+                _FolderWatcher.WaitThreadsFinished(true);
 
                 int index = e.ItemIndex - _FolderWatcher.DirectoryCache.Count;
 
@@ -746,12 +750,12 @@ namespace ImViewLite
                 /*if (finfo.Exists)
                 {*/
                     fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
-                /*}
+         /*   }
                 else
-                {
-                    fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
-                }*/
-                fitem.SubItems.Add(finfo.FullName);
+            {
+                fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
+            }*/
+            fitem.SubItems.Add(finfo.FullName);
 
                 e.Item = fitem;
             }
@@ -901,19 +905,19 @@ namespace ImViewLite
         private void _FolderWatcher_DirectoryAdded(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
-            this._ListViewItemCache = new ListViewItemEx[] { };
+            RefreshListView();
         }
 
         private void _FolderWatcher_FileAdded(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
-            this._ListViewItemCache = new ListViewItemEx[] { };
+            RefreshListView();
         }
 
         private void _FolderWatcher_DirectoryRemoved(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            this._ListViewItemCache = new ListViewItemEx[] { };
+            RefreshListView();
 
             if (InternalSettings.Agressive_Image_Unloading)
                 ReloadCurrentImage();
@@ -922,7 +926,7 @@ namespace ImViewLite
         private void _FolderWatcher_FileRemoved(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            this._ListViewItemCache = new ListViewItemEx[] { };
+            RefreshListView();
 
             if (InternalSettings.Agressive_Image_Unloading)
                 ReloadCurrentImage();
