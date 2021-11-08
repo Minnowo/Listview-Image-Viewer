@@ -43,14 +43,30 @@ namespace ImViewLite.Misc
         public List<string> DirectoryCache;        // list of sorted directories for the current directory
         public List<string> FileCache;             // list of sorted files for the current directory
 
+        private Queue<RenamedEventArgs> _ItemRenamedQueue = new Queue<RenamedEventArgs>();
+        private Queue<string> _ItemDeletedQueue = new Queue<string>();
+        private Queue<string> _FileCreatedQueue = new Queue<string>();
+        private Queue<string> _DirectoryCreatedQueue = new Queue<string>();
+
+        // switched to using a timer and queue to prevent buffer overflow of the FileSystemWatcher
+        // otherwise the FileSystemWatcher will skip / miss files that are deleted causing lots of issues
+        // modified TIMER class allows for the use of the timer on non-ui threads
+        private TIMER _EmptyItemRenamedQueueTimer = new TIMER() { Interval = 200 };
+        private TIMER _EmptyItemDeletedQueueTimer = new TIMER() { Interval = 200 };
+        private TIMER _EmptyFileCreatedQueueTimer = new TIMER() { Interval = 200 };
+        private TIMER _EmptyDirectoryCreatedQueueTimer = new TIMER() { Interval = 200 };
+
         private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
         private string directory;
 
         private Task DirectorySortThread;
         private Task FileSortThread;
-
         public FolderWatcher()
         {
+            _EmptyFileCreatedQueueTimer.Tick += _EmptyFileCreatedQueueTimer_Tick;
+            _EmptyDirectoryCreatedQueueTimer.Tick += _EmptyDirectoryCreatedQueueTimer_Tick;
+            _EmptyItemDeletedQueueTimer.Tick += _EmptyItemDeletedQueueTimer_Tick;
+            _EmptyItemRenamedQueueTimer.Tick += _EmptyItemRenamedQueueTimer_Tick;
             directory = "";
             CreateWatchers(Directory.GetCurrentDirectory(), false);
             FileCache = new List<string>();
@@ -58,10 +74,15 @@ namespace ImViewLite.Misc
             UpdateDirectory("");
         }
 
+
         public FolderWatcher(string path)
         {
+            _EmptyFileCreatedQueueTimer.Tick += _EmptyFileCreatedQueueTimer_Tick;
+            _EmptyDirectoryCreatedQueueTimer.Tick += _EmptyDirectoryCreatedQueueTimer_Tick;
+            _EmptyItemDeletedQueueTimer.Tick += _EmptyItemDeletedQueueTimer_Tick;
+            _EmptyItemRenamedQueueTimer.Tick += _EmptyItemRenamedQueueTimer_Tick;
             directory = path;
-            
+
             if (!Directory.Exists(path))
             {
                 CreateWatchers(Directory.GetCurrentDirectory(), false);
@@ -74,18 +95,75 @@ namespace ImViewLite.Misc
             SetFiles(path);
         }
 
-        private int GetMaxFileLength()
+        private void _EmptyItemRenamedQueueTimer_Tick(object sender, EventArgs e)
         {
-            WaitThreadsFinished(true);
+            _EmptyItemRenamedQueueTimer.Stop();
 
-            return FileCache.Aggregate("", (max, cur) => max.Length > cur.Length ? max : cur).Length;
+            WaitThreadsFinished();
+
+            RenamedEventArgs ea;
+            while(_ItemRenamedQueue.Count != 0)
+            {
+                ea = _ItemRenamedQueue.Dequeue();
+
+                if (FileCache.Remove(ea.OldName))
+                {
+                    BinaryInsertFileCache(ea.Name,  false);
+                    OnFileRenamed(ea.Name, ea.OldName);
+                }
+
+                if (DirectoryCache.Remove(ea.OldName))
+                {
+                    BinaryInsertDirectoryCache(ea.Name,  false);
+                    OnDirectoryRenamed(ea.Name, ea.OldName);
+                }
+            }
         }
 
-        private int GetMaxDirectoryLength()
+        private void _EmptyItemDeletedQueueTimer_Tick(object sender, EventArgs e)
         {
+            _EmptyItemDeletedQueueTimer.Stop();
+
+            WaitThreadsFinished();
+
+            string name;
+            while (_ItemDeletedQueue.Count != 0)
+            {
+                name = _ItemDeletedQueue.Dequeue();
+
+                if (FileCache.Remove(name))
+                {
+                    OnFileRemoved(name);
+                }
+                if (DirectoryCache.Remove(name))
+                {
+                    OnDirectoryRemoved(name);
+                }
+            }
+        }
+
+        private void _EmptyFileCreatedQueueTimer_Tick(object sender, EventArgs e)
+        {
+            _EmptyFileCreatedQueueTimer.Stop();
+            
+            WaitThreadsFinished(true);
+            
+            while (_FileCreatedQueue.Count != 0)
+            {
+                BinaryInsertFileCache(_FileCreatedQueue.Dequeue());
+            }
+        }
+
+        private void _EmptyDirectoryCreatedQueueTimer_Tick(object sender, EventArgs e)
+        {
+            _EmptyDirectoryCreatedQueueTimer.Stop();
+
             WaitThreadsFinished(false);
 
-            return DirectoryCache.Aggregate("", (max, cur) => max.Length > cur.Length ? max : cur).Length;
+            while (_DirectoryCreatedQueue.Count != 0)
+            {
+                BinaryInsertDirectoryCache(_DirectoryCreatedQueue.Dequeue());
+            }
         }
 
         /// <summary>
@@ -97,8 +175,11 @@ namespace ImViewLite.Misc
             {
                 if (FileSortThread == null)
                     return;
+
                 if (!FileSortThread.IsCompleted)
+                {
                     FileSortThread.Wait();
+                }
             }
             else
             {
@@ -115,118 +196,82 @@ namespace ImViewLite.Misc
             WaitThreadsFinished(false);
         }
 
+        private int BinarySearchIndex(List<string> arr, string name)
+        {
+            int L = 0;
+            int R = arr.Count;
+            int mid;
 
-        private void InsertProperPositionFile(string name)
+            while(L < R)
+            {
+                mid = (L + R) / 2;
+
+                if(Helper.StringCompareNatural(arr[mid], name) <= 0)
+                {
+                    L = mid + 1;
+                }
+                else
+                {
+                    R = mid;
+                }
+            }
+
+            return L;
+        }
+
+        private void BinaryInsertFileCache(string name, bool fireEvent = true)
         {
             if (string.IsNullOrEmpty(name))
                 return;
-            FileSortThread = Task.Run(() => {
-                int i;
-                for (i = 0; i < FileCache.Count; i++)
-                {
-                    if (string.IsNullOrEmpty(FileCache[i]))
-                        continue;
 
-                    if (Helper.StringCompareNatural(FileCache[i], name) >= 0)
-                    {
-                        break;
-                    }
-                }
-                FileCache.Insert(i, name);
+            int index = BinarySearchIndex(FileCache, name);
+            FileCache.Insert(index, name);
+            if(fireEvent)
                 OnFileAdded(name);
-            });
         }
 
-        private void InsertProperPositionDirectory(string name)
+
+        private void BinaryInsertDirectoryCache(string name, bool fireEvent = true)
         {
-            DirectorySortThread = Task.Run(() => {
-                int i;
-                for (i = 0; i < DirectoryCache.Count; i++)
-                {
-                    if (Helper.StringCompareNatural(DirectoryCache[i], name) >= 0)
-                    {
-                        break;
-                    }
-                }
-                DirectoryCache.Insert(i, name);
+            if (string.IsNullOrEmpty(name))
+                return;
+
+            int index = BinarySearchIndex(DirectoryCache, name);
+            DirectoryCache.Insert(index, name);
+            if(fireEvent)
                 OnDirectoryAdded(name);
-            });
         }
+
 
         private void ItemRenamed(object sender, RenamedEventArgs e)
         {
-            WaitThreadsFinished();
-            int fileRenamed = 0;
-            int directoryRenamed = 0;
+            _ItemRenamedQueue.Enqueue(e);
+            _EmptyItemRenamedQueueTimer.Stop();
+            _EmptyItemRenamedQueueTimer.Start();
+        }
 
-            if (FileCache.Remove(e.OldName))
+        private void ItemCreated(object sender, FileSystemEventArgs e)
+        {
+            if (File.Exists(e.FullPath))
             {
-                OnFileRemoved(e.Name);
-                fileRenamed++;
+                _FileCreatedQueue.Enqueue(e.Name);
+                _EmptyFileCreatedQueueTimer.Stop();
+                _EmptyFileCreatedQueueTimer.Start();
             }
-
-            if (DirectoryCache.Remove(e.OldName))
+            else if (Directory.Exists(e.FullPath))
             {
-                OnDirectoryRemoved(e.Name);
-                directoryRenamed++;
-            }
-
-            if (File.Exists(e.Name))
-            {
-                InsertProperPositionFile(e.Name);
-                fileRenamed++;
-            }
-            if (Directory.Exists(e.Name))
-            {
-                InsertProperPositionDirectory(e.Name);
-                directoryRenamed++;
-            }
-
-            if (fileRenamed == 2)
-            {
-                OnFileRenamed(e.Name, e.OldName);
-            }
-
-            if(directoryRenamed == 2)
-            {
-                OnDirectoryRenamed(e.Name, e.OldName);
+                _DirectoryCreatedQueue.Enqueue(e.Name);
+                _EmptyDirectoryCreatedQueueTimer.Stop();
+                _EmptyDirectoryCreatedQueueTimer.Start();
             }
         }
 
-        private void FolderChanged(object sender, FileSystemEventArgs e)
+
+        private void ItemDeleted(object sender, FileSystemEventArgs e)
         {
-            Console.WriteLine(e.ChangeType);
-            switch (e.ChangeType)
-            {
-                // no need to remove from list we will check if the file exists when fetching
-                case WatcherChangeTypes.Deleted:
-                    WaitThreadsFinished();
-
-                    if (FileCache.Remove(e.Name))
-                    {
-                        OnFileRemoved(e.Name);
-                    }
-
-                    if (DirectoryCache.Remove(e.Name))
-                    {
-                        OnDirectoryRemoved(e.Name);
-                    }
-                    
-                    break;
-
-                // using a timer because i don't want to waste cpu resorting the files if lots of files 
-                // are being created / copied
-                case WatcherChangeTypes.Created:
-                    if (File.Exists(e.Name))
-                    {
-                        InsertProperPositionFile(e.Name);
-                    }
-                    else if (Directory.Exists(e.FullPath))
-                    {
-                        InsertProperPositionDirectory(e.Name);
-                    }
-                    break;
-            }
+            _ItemDeletedQueue.Enqueue(e.Name);
+            _EmptyItemDeletedQueueTimer.Stop();
+            _EmptyItemDeletedQueueTimer.Start();
         }
 
         private void SetFiles(string path)
@@ -240,7 +285,6 @@ namespace ImViewLite.Misc
                 {
                     FileCache.Add(Path.GetFileName(i));
                 }
-                // FileCache = Directory.EnumerateFiles(path).OrderByNatural(e => e).ToList();
             });
 
             DirectorySortThread = Task.Run(() =>
@@ -250,7 +294,6 @@ namespace ImViewLite.Misc
                 {
                     DirectoryCache.Add(Path.GetFileName(i));
                 }
-                //DirectoryCache = Directory.EnumerateDirectories(path).OrderByNatural(e => e).ToList();
             });
         }
 
@@ -260,14 +303,15 @@ namespace ImViewLite.Misc
             FileSystemWatcher w = new FileSystemWatcher();
             w.Path = path;
             w.IncludeSubdirectories = false;
-            w.Created += FolderChanged;
+            w.NotifyFilter = NotifyFilters.FileName;
+            w.Created += ItemCreated;
             w.Renamed += ItemRenamed;
-            w.Deleted += FolderChanged;
+            w.Deleted += ItemDeleted;
             w.EnableRaisingEvents = enabled;
             watchers.Add(w);
         }
-        
 
+       
         private void UpdateWatchers(string path, bool enable = true)
         {
             foreach (FileSystemWatcher fsw in watchers)
@@ -365,21 +409,29 @@ namespace ImViewLite.Misc
         {
             foreach(FileSystemWatcher fsw in watchers)
             {
-                fsw.Created -= FolderChanged;
+                fsw.Created -= ItemCreated;
                 fsw.Renamed -= ItemRenamed;
-                fsw.Deleted -= FolderChanged;
+                fsw.Deleted -= ItemDeleted;
                 fsw.Dispose();
             }
 
+            this._EmptyFileCreatedQueueTimer.Tick -= _EmptyFileCreatedQueueTimer_Tick;
+            this._EmptyItemDeletedQueueTimer.Tick -= _EmptyItemDeletedQueueTimer_Tick;
+            this._EmptyDirectoryCreatedQueueTimer.Tick -= _EmptyDirectoryCreatedQueueTimer_Tick;
+            this._EmptyItemRenamedQueueTimer.Tick -= _EmptyItemRenamedQueueTimer_Tick;
             this.watchers.Clear();
             
             WaitThreadsFinished();
             
+            this._EmptyFileCreatedQueueTimer?.Dispose();
+            this._EmptyItemDeletedQueueTimer?.Dispose();
+            this._EmptyDirectoryCreatedQueueTimer?.Dispose();
+            this._EmptyItemRenamedQueueTimer?.Dispose();
             this.FileCache.Clear();
             this.FileSortThread?.Dispose();
             this.DirectoryCache.Clear();
             this.DirectorySortThread?.Dispose();
-
+            
             GC.SuppressFinalize(this);
         }
     }

@@ -184,6 +184,9 @@
     <Compile Include="Settings\SettingsLoader.cs" />
     <Compile Include="Types\FolderWatcher.cs" />
     <Compile Include="Types\Hotkey.cs" />
+    <Compile Include="Types\TIMER.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <EmbeddedResource Include="Controls\HotkeyControl.resx" />
     <EmbeddedResource Include="Controls\KeyRebind.resx" />
     <EmbeddedResource Include="Controls\RenameFileForm.resx">

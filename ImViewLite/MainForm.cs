@@ -71,6 +71,8 @@ namespace ImViewLite
             _FolderWatcher.DirectoryRemoved += _FolderWatcher_DirectoryRemoved;
             _FolderWatcher.FileAdded += _FolderWatcher_FileAdded;
             _FolderWatcher.DirectoryAdded += _FolderWatcher_DirectoryAdded;
+            _FolderWatcher.DirectoryRenamed += _FolderWatcher_DirectoryRenamed;
+            _FolderWatcher.FileRenamed += _FolderWatcher_FileRenamed;
 
             this.listView1.VirtualMode = true;
             this.listView1.VirtualListSize = 0;
@@ -95,6 +97,8 @@ namespace ImViewLite
             _CurrentDirectory = "";
             LoadDirectory("");
         }
+
+        
 
         public void RefreshListView()
         {
@@ -740,22 +744,22 @@ namespace ImViewLite
                     e.Item = ditem;
                     return;
                 }
-                _FolderWatcher.WaitThreadsFinished(true);
+                _FolderWatcher.WaitThreadsFinished();
 
                 int index = e.ItemIndex - _FolderWatcher.DirectoryCache.Count;
 
                 FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
                 ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
                 //fitem.SelectionChanged += ListViewItem_Click;
-                /*if (finfo.Exists)
-                {*/
+                if (finfo.Exists)
+                {
                     fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
-         /*   }
+                }
                 else
-            {
-                fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
-            }*/
-            fitem.SubItems.Add(finfo.FullName);
+                {
+                    fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
+                }
+                fitem.SubItems.Add(finfo.FullName);
 
                 e.Item = fitem;
             }
@@ -820,13 +824,20 @@ namespace ImViewLite
                     count++;
                 }
 
-                _FolderWatcher.WaitThreadsFinished(false);
+                _FolderWatcher.WaitThreadsFinished(true);
                 for (int index = 0; count < length; index++)
                 {
                     FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
                     ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
                     //fitem.SelectionChanged += ListViewItem_Click;
-                    fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                    if (finfo.Exists)
+                    {
+                        fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                    }
+                    else
+                    {
+                        fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
+                    }
                     fitem.SubItems.Add(finfo.FullName);
 
                     _ListViewItemCache[count] = fitem;
@@ -904,34 +915,56 @@ namespace ImViewLite
 
         private void _FolderWatcher_DirectoryAdded(string name)
         {
-            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
-            RefreshListView();
+            this.listView1.InvokeSafe(() => {
+                this.listView1.VirtualListSize++; 
+                RefreshListView();
+            });
         }
 
         private void _FolderWatcher_FileAdded(string name)
         {
-            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
-            RefreshListView();
+            this.listView1.InvokeSafe(() => { 
+                this.listView1.VirtualListSize++; 
+                RefreshListView();
+            });
         }
 
         private void _FolderWatcher_DirectoryRemoved(string name)
         {
-            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            RefreshListView();
+            this.listView1.InvokeSafe(() => { 
+                this.listView1.VirtualListSize--; 
+                RefreshListView();
 
-            if (InternalSettings.Agressive_Image_Unloading)
-                ReloadCurrentImage();
+                if (InternalSettings.Agressive_Image_Unloading)
+                    ReloadCurrentImage();
+            });
         }
 
         private void _FolderWatcher_FileRemoved(string name)
         {
-            this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            RefreshListView();
+            this.listView1.InvokeSafe(() => { 
+                this.listView1.VirtualListSize--; 
+                RefreshListView();
+                
+                if (InternalSettings.Agressive_Image_Unloading)
+                    ReloadCurrentImage();
+            });
 
-            if (InternalSettings.Agressive_Image_Unloading)
-                ReloadCurrentImage();
+            
         }
-        
+
+        private void _FolderWatcher_FileRenamed(string newName, string oldName)
+        {
+            Console.WriteLine("refreshing listview");
+            RefreshListView();
+            listView1.Invalidate();
+        }
+
+        private void _FolderWatcher_DirectoryRenamed(string newName, string oldName)
+        {
+            RefreshListView();
+            listView1.Invalidate();
+        }
 
         private void UpArrowButton_Click(object sender, EventArgs e)
         {
