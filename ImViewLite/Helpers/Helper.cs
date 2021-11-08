@@ -12,6 +12,7 @@ using System.Security.Principal;
 using System.Windows.Forms;
 using System.Text.RegularExpressions;
 
+using ImViewLite.Enums;
 using ImViewLite.Settings;
 
 namespace ImViewLite.Helpers
@@ -142,6 +143,23 @@ namespace ImViewLite.Helpers
         public static bool ValidSize(Size size)
         {
             return (size.Width > 0 && size.Height > 0);
+        }
+
+        public static string SizeSuffix(Int64 value, FileSizeUnit fsu, int decimalPlaces = 1)
+        {
+            if (decimalPlaces < 0) { throw new ArgumentOutOfRangeException("decimalPlaces"); }
+            if (value < 0) { return "-" + SizeSuffix(-value, fsu, decimalPlaces); }
+            if (value == 0) { return string.Format("{0:n" + decimalPlaces + "} {1}", 0, SizeSuffixes[(int)fsu]); }
+
+            int mag = (int)fsu;
+            // 1L << (mag * 10) == 2 ^ (10 * mag) 
+            // [i.e. the number of bytes in the unit corresponding to mag]
+            decimal adjustedSize = (decimal)value / (1L << (mag * 10));
+
+            return string.Format(
+                "{0:n" + decimalPlaces + "} {1}",
+                adjustedSize,
+                SizeSuffixes[mag]);
         }
 
         /// <summary>

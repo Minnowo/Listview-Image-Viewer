@@ -30,6 +30,9 @@ namespace ImViewLite.Misc
         public delegate void DirectoryRenamedEvent(string newName, string oldName);
         public event DirectoryRenamedEvent DirectoryRenamed;
 
+        public bool AboveDrives { get { return _AboveDrives; } }
+        private bool _AboveDrives = false;
+
         public string CurrentDirectory
         {
             get
@@ -52,6 +55,7 @@ namespace ImViewLite.Misc
             CreateWatchers(Directory.GetCurrentDirectory(), false);
             FileCache = new List<string>();
             DirectoryCache = new List<string>();
+            UpdateDirectory("");
         }
 
         public FolderWatcher(string path)
@@ -293,14 +297,27 @@ namespace ImViewLite.Misc
 
         public void UpdateDirectory(string path)
         {
+            _AboveDrives = false;
             directory = path;
 
             if (!Directory.Exists(path))
             {
                 WaitThreadsFinished();
-                UpdateWatchers(path, false);
+                
                 DirectoryCache.Clear();
                 FileCache.Clear();
+                if (!string.IsNullOrEmpty(path))
+                {
+                    UpdateWatchers(path, false);
+                }
+                else
+                {
+                    foreach (DriveInfo di in DriveInfo.GetDrives())
+                    {
+                        DirectoryCache.Add(di.Name);
+                    }
+                    _AboveDrives = true;
+                }
                 return;
             }
 

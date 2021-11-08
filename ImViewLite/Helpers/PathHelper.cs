@@ -154,5 +154,26 @@ namespace ImViewLite.Helpers
             }
             return false;
         }
+
+
+
+        public static string SelectFolderDialog(string title, string initialDirectory = "")
+        {
+            using (FolderSelectDialog fsd = new FolderSelectDialog())
+            {
+                fsd.Title = title;
+                
+                if (!string.IsNullOrEmpty(initialDirectory))
+                {
+                    fsd.InitialDirectory = initialDirectory;
+                }
+
+                if (fsd.ShowDialog())
+                {
+                    return fsd.FileName;
+                }
+            }
+            return string.Empty;
+        }
     }
 }

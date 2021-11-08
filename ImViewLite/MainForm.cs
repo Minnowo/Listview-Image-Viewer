@@ -14,6 +14,7 @@ using ImViewLite.Settings;
 using ImViewLite.Controls;
 using ImViewLite.Enums;
 using ImViewLite.Misc;
+using System.Text;
 
 namespace ImViewLite
 {
@@ -69,8 +70,6 @@ namespace ImViewLite
             _FolderWatcher.DirectoryRemoved += _FolderWatcher_DirectoryRemoved;
             _FolderWatcher.FileAdded += _FolderWatcher_FileAdded;
             _FolderWatcher.DirectoryAdded += _FolderWatcher_DirectoryAdded;
-            _FolderWatcher.FileRenamed += _FolderWatcher_FileRenamed;
-            _FolderWatcher.DirectoryRenamed += _FolderWatcher_DirectoryRenamed;
 
             this.listView1.VirtualMode = true;
             this.listView1.VirtualListSize = 0;
@@ -86,10 +85,14 @@ namespace ImViewLite
             this.KeyUp += MainForm_KeyUp;
             _LoadImageTimer.Tick += LoadImageTimer_Tick;
 
-            this.textBox1.Text = "\"D:\\Pictures\\tmp\\\"";
+            this.textBox1.Text = "";
             this.TopMost = InternalSettings.Always_On_Top;
             this.KeyPreview = true;
             ResumeLayout();
+
+            // empty string to just list all drives 
+            _CurrentDirectory = "";
+            LoadDirectory("");
         }
 
         
@@ -121,7 +124,15 @@ namespace ImViewLite
                 return;
             }
 
-            Directory.SetCurrentDirectory(path);
+            if (!string.IsNullOrEmpty(path))
+            {
+                Directory.SetCurrentDirectory(path);
+            }
+            else
+            {
+                Directory.SetCurrentDirectory("C:\\");
+            }
+            _CurrentDirectory = path;
             _FolderWatcher.UpdateDirectory(path);
             Console.WriteLine(_FolderWatcher.CurrentDirectory);
             this.listView1.VirtualListSize = _FolderWatcher.GetTotalCount();
@@ -198,6 +209,10 @@ namespace ImViewLite
                     this.ReloadCurrentImage();
                 }
             }
+            else
+            {
+                this.LoadDirectory("", true);
+            }
         }
 
         /// <summary>
@@ -254,6 +269,111 @@ namespace ImViewLite
             {
                 LoadImage(newPath);
             }
+        }
+
+        public void CopySelectedItemText(int index)
+        {
+            if (listView1.SelectedIndices.Count < 2)
+            {
+                if (listView1.FocusedItem != null)
+                {
+                    ClipboardHelper.CopyText(listView1.FocusedItem.SubItems[index].Text);
+                }
+                return;
+            }
+
+            StringBuilder paths = new StringBuilder();
+
+            int i = 0;
+            foreach (int ii in listView1.SelectedIndices)
+            {
+                paths.AppendLine(listView1.Items[ii].SubItems[index].Text);
+                i++;
+            }
+            ClipboardHelper.CopyText(paths.ToString());
+        }
+
+        public void CopySelectedItemsSize(FileSizeUnit size, int decimalPlaces = 1)
+        {
+            FileInfo info;
+
+            if (listView1.SelectedIndices.Count < 2)
+            {
+                if (listView1.FocusedItem != null)
+                {
+                    info = new FileInfo(listView1.FocusedItem.SubItems[2].Text);
+                    ClipboardHelper.CopyText(Helper.SizeSuffix(info.Length, size, decimalPlaces));
+                }
+                return;
+            }
+
+            StringBuilder paths = new StringBuilder();
+
+            int i = 0;
+            foreach (int ii in listView1.SelectedIndices)
+            {
+                info = new FileInfo(listView1.Items[ii].SubItems[2].Text);
+                paths.AppendLine(Helper.SizeSuffix(info.Length, size, decimalPlaces));
+                i++;
+            }
+            ClipboardHelper.CopyText(paths.ToString());
+        }
+
+        public void CopySelectedFileNames()
+        {
+            CopySelectedItemText(0);
+        }
+
+        public void CopySelectedPaths()
+        {
+            CopySelectedItemText(2);
+        }
+
+        public void CopyDimensionsSelectedFiles(string formatDims)
+        {
+            Size dims;
+            if (listView1.SelectedIndices.Count < 2)
+            {
+                if (listView1.FocusedItem != null)
+                {
+                    dims = ImageHelper.GetImageDimensionsFromFile(listView1.FocusedItem.SubItems[2].Text);
+                    ClipboardHelper.CopyText(string.Format(formatDims, dims.Width, dims.Height));
+                }
+                return;
+            }
+
+            StringBuilder paths = new StringBuilder();
+
+            int i = 0;
+            foreach (int ii in listView1.SelectedIndices)
+            {
+                dims = ImageHelper.GetImageDimensionsFromFile(listView1.FocusedItem.SubItems[2].Text);
+                paths.AppendLine(string.Format(formatDims, dims.Width, dims.Height));
+                i++;
+            }
+            ClipboardHelper.CopyText(paths.ToString());
+        }
+
+        public void CopySelectedFiles()
+        {
+            if (listView1.SelectedIndices.Count < 2)
+            {
+                if (listView1.FocusedItem != null)
+                {
+                    ClipboardHelper.CopyFile(listView1.FocusedItem.SubItems[2].Text);
+                }
+                return;
+            }
+            
+            string[] files = new string[listView1.SelectedIndices.Count];
+
+            int i = 0;
+            foreach(int ii in listView1.SelectedIndices)
+            {
+                files[i] = listView1.Items[ii].SubItems[2].Text;
+                i++;
+            }
+            ClipboardHelper.CopyFile(files);            
         }
 
         public void DeleteSelectedItems()
@@ -412,6 +532,39 @@ namespace ImViewLite
             }
         }
 
+        public void MoveSelectedFiles(string path = null)
+        {
+            if (string.IsNullOrEmpty(path))
+            {
+                try
+                {
+                    path = PathHelper.SelectFolderDialog(InternalSettings.Folder_Select_Dialog_Title, Path.GetDirectoryName(CurrentDirectory));
+                }
+                catch
+                {
+                    path = PathHelper.SelectFolderDialog(InternalSettings.Folder_Select_Dialog_Title);
+                }
+            }
+
+            string file;
+
+            if (listView1.SelectedIndices.Count > 1)
+            {
+                foreach (int i in listView1.SelectedIndices)
+                {
+                    file = listView1.Items[i].SubItems[2].Text;
+                    PathHelper.MoveFile(file, Path.Combine(path, Path.GetFileName(file)));
+                }
+                return;
+            }
+
+            if (listView1.FocusedItem != null)
+            {
+                file = listView1.FocusedItem.SubItems[2].Text;
+                PathHelper.MoveFile(file, Path.Combine(path, Path.GetFileName(file)));
+            }
+        }
+
         public void ExecuteCommand(Command cmd, string arg)
         {
             ExecuteCommand(cmd, new string[] { arg });
@@ -447,7 +600,7 @@ namespace ImViewLite
                 case Command.PreviousFrame:         imageDisplay1.PreviousImageFrame(); break;
                 case Command.UpDirectoryLevel:      UpDirectoryLevel(); break;
                 case Command.OpenSelectedDirectory: UpdateDirectory(path, true); break;
-                case Command.MoveImage:             MoveImage(path, args); break;
+                case Command.MoveImage:             MoveSelectedFiles(path); break;
                 case Command.RenameImage:           RenameSelectedItems(); break;
                 case Command.DeleteImage:           DeleteSelectedItems(); break;
                 case Command.ToggleAlwaysOnTop:     ToggleAlwaysOnTop(); break;
@@ -700,11 +853,6 @@ namespace ImViewLite
 
         }
 
-        private void newWindowToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
         private void ListView1_RightClicked()
         {
             if (listView1.FocusedItem == null)
@@ -730,6 +878,11 @@ namespace ImViewLite
 
             string text = textBox1.Text;
 
+            if(string.IsNullOrEmpty(text) || text == "\"\"")
+            {
+                LoadDirectory("", true);
+            }
+
             Match m = _MatchFilePath.Match(text);
 
             if (m.Success)
@@ -748,41 +901,33 @@ namespace ImViewLite
         private void _FolderWatcher_DirectoryAdded(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
+            this._ListViewItemCache = new ListViewItemEx[] { };
         }
 
         private void _FolderWatcher_FileAdded(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize++; });
+            this._ListViewItemCache = new ListViewItemEx[] { };
         }
 
         private void _FolderWatcher_DirectoryRemoved(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
+            this._ListViewItemCache = new ListViewItemEx[] { };
 
             if (InternalSettings.Agressive_Image_Unloading)
                 ReloadCurrentImage();
         }
 
-        private void _FolderWatcher_DirectoryRenamed(string newName, string oldName)
-        {
-            // because the rename in the FolderWatcher class removes and adds the new / old name in the same function
-            // the listview doesn't pull new items from the cache, but uses the old cache
-            // so we need to clear the cache to force the newly renamed items to appear 
-            this._ListViewItemCache = new ListViewItemEx[] { };
-        }
-
-        private void _FolderWatcher_FileRenamed(string newName, string oldName)
-        {
-            this._ListViewItemCache = new ListViewItemEx[] { };
-        }
-
         private void _FolderWatcher_FileRemoved(string name)
         {
             this.listView1.InvokeSafe(() => { this.listView1.VirtualListSize--; });
-            
-            if(InternalSettings.Agressive_Image_Unloading)
+            this._ListViewItemCache = new ListViewItemEx[] { };
+
+            if (InternalSettings.Agressive_Image_Unloading)
                 ReloadCurrentImage();
         }
+        
 
         private void UpArrowButton_Click(object sender, EventArgs e)
         {
@@ -802,6 +947,7 @@ namespace ImViewLite
         private void openToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             OpenSelectedItems();
+            contextMenuStrip1.Close();
         }
 
         private void openWithDefaultProgramToolStripMenuItem_Click(object sender, EventArgs e)
@@ -816,12 +962,13 @@ namespace ImViewLite
 
         private void cutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            MoveSelectedFiles();
         }
 
         private void copyToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            CopySelectedFiles();
+            contextMenuStrip1.Close();
         }
 
         private void textBox1_Enter(object sender, EventArgs e)
@@ -834,6 +981,101 @@ namespace ImViewLite
             _IsUsingTextbox = false;
         }
 
-        
+        private void fileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedFiles();
+        }
+
+        private void pathToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedPaths();
+        }
+
+        private void bytesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedItemsSize(FileSizeUnit.Byte);
+        }
+
+        private void kilobytesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedItemsSize(FileSizeUnit.Kilobyte);
+        }
+
+        private void megabytesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedItemsSize(FileSizeUnit.Megabyte);
+        }
+
+        private void gigabytesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedItemsSize(FileSizeUnit.Gigabyte);
+        }
+
+        private void terabytesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedItemsSize(FileSizeUnit.Terabyte, 3);
+        }
+
+        private void petabyteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedItemsSize(FileSizeUnit.Petabyte, 5);
+        }
+
+        private void defaultToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(listView1.FocusedItem != null)
+            {
+                ClipboardHelper.CopyImageFromFile(listView1.FocusedItem.SubItems[2].Text);
+            }
+        }
+
+        private void invertedToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.FocusedItem != null)
+            {
+                ClipboardHelper.CopyImageFromFile(listView1.FocusedItem.SubItems[2].Text, ImageEffect.Invert);
+            }
+        }
+
+        private void grayscaleToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.FocusedItem != null)
+            {
+                ClipboardHelper.CopyImageFromFile(listView1.FocusedItem.SubItems[2].Text, ImageEffect.Grayscale);
+            }
+        }
+
+        private void imageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.FocusedItem != null)
+            {
+                ClipboardHelper.CopyImageFromFile(listView1.FocusedItem.SubItems[2].Text);
+            }
+        }
+
+        private void widthXHeightToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopyDimensionsSelectedFiles("{0}x{1}");
+        }
+
+        private void dimensionsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopyDimensionsSelectedFiles("{0}x{1}");
+        }
+
+        private void widthToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopyDimensionsSelectedFiles("{0}");
+        }
+
+        private void heightToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopyDimensionsSelectedFiles("{1}");
+        }
+
+        private void fileNameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedFileNames();
+        }
     }
 }

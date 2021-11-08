@@ -44,7 +44,6 @@ namespace ImViewLite.Controls
             LastSelectedItem = e.Item;
             NewestSelectedIndex = e.ItemIndex;
             OldestSelectedIndex = e.ItemIndex;
-            Console.WriteLine("item changed");
             base.OnItemSelectionChanged(e);    
         }
 

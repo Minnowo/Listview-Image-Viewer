@@ -83,6 +83,8 @@
     </Compile>
     <Compile Include="Enums\Commands.cs" />
     <Compile Include="Enums\EnumToString.cs" />
+    <Compile Include="Enums\FileSizeUnit.cs" />
+    <Compile Include="Enums\ImageEffect.cs" />
     <Compile Include="Forms\ArgumentSelectionForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -97,6 +99,7 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\SettingsForm.Designer.cs" />
+    <Compile Include="Helpers\FolderSelectDialog.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

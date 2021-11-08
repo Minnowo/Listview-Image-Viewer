@@ -50,6 +50,35 @@ namespace ImViewLite.Helpers
             return false;
         }
 
+        public static bool CopyText(string text)
+        {
+            if (!string.IsNullOrEmpty(text))
+            {
+                try
+                {
+                    IDataObject data = new DataObject();
+                    string dataFormat;
+
+                    if (Environment.OSVersion.Platform != PlatformID.Win32NT || Environment.OSVersion.Version.Major < 5)
+                    {
+                        dataFormat = DataFormats.Text;
+                    }
+                    else
+                    {
+                        dataFormat = DataFormats.UnicodeText;
+                    }
+
+                    data.SetData(dataFormat, false, text);
+                    return CopyData(data);
+                }
+                catch
+                {
+                }
+            }
+
+            return false;
+        }
+
         public static bool FormatCopyColor(ColorFormat format, Color color)
         {
             return FormatCopyColor(format, new COLOR(color));
@@ -103,6 +132,49 @@ namespace ImViewLite.Helpers
             dataObject.SetData(DataFormats.StringFormat, true, str);
 
             return CopyData(dataObject);
+        }
+
+        public static bool CopyImageFromFile(string path, Enums.ImageEffect ie)
+        {
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            {
+                try
+                {
+                    using (IMAGE bmp = ImageHelper.LoadImage(path))
+                    {
+                        switch (ie)
+                        {
+                            case Enums.ImageEffect.None:break;
+                            case Enums.ImageEffect.Invert: bmp.InvertColor(); break;
+                            case Enums.ImageEffect.Grayscale: bmp.ConvertGrayscale(); break;
+                        }
+                        return CopyImage(bmp);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return false;
+        }
+        public static bool CopyImageFromFile(string path)
+        {
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            {
+                try
+                {
+                    using (Bitmap bmp = ImageHelper.LoadImage(path))
+                    {
+                        return CopyImage(bmp);
+                    }
+                }
+                catch
+                {
+                }
+            }
+
+            return false;
         }
 
         public static bool CopyImage(Image img)
@@ -174,6 +246,36 @@ namespace ImViewLite.Helpers
 
                 return CopyData(dataObject);
             }
+        }
+
+        public static bool CopyFile(string path)
+        {
+            if (!string.IsNullOrEmpty(path))
+            {
+                return CopyFile(new string[] { path });
+            }
+
+            return false;
+        }
+
+        public static bool CopyFile(string[] paths)
+        {
+            if (paths != null && paths.Length > 0)
+            {
+                try
+                {
+                    IDataObject dataObject = new DataObject();
+                    dataObject.SetData(DataFormats.FileDrop, true, paths);
+
+                    return CopyData(dataObject);
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine(e);
+                }
+            }
+
+            return false;
         }
 
         public static Bitmap GetImage()
