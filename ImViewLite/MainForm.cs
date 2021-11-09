@@ -38,18 +38,17 @@ namespace ImViewLite
 
         public ListViewItem SelectedItem;
 
-
-
         private string _CurrentDirectory = "";
         private int _CahceItem1;                     // stores the index of the first item in the cache
         private ListViewItemEx[] _ListViewItemCache; // array to cache items for the virtual list
         private FolderWatcher _FolderWatcher;
 
-        private Timer _LoadImageTimer = new Timer() { Interval = 50 };
+        private TIMER _LoadImageTimer = new TIMER() { Interval = 50 };
         private Regex _MatchFilePath = new Regex("\"(?<path>[^\"]*)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private bool _IsUsingTextbox = false;
-        private bool _PreventIndexError = false;
         private bool _PreventOverflow = false;
+        private object _CacheLock = new object();
+
         public MainForm()
         {
             InitializeComponent();
@@ -98,13 +97,17 @@ namespace ImViewLite
             LoadDirectory("");
         }
 
-        
-
         public void RefreshListView()
         {
-            this._ListViewItemCache = new ListViewItemEx[] { };
-        }
+            lock (_CacheLock)
+            {
+                this._ListViewItemCache = new ListViewItemEx[] { };
+                this.listView1.Invalidate();
+            }
 
+            if (InternalSettings.Agressive_Image_Unloading)
+                DelayLoadImage(this.listView1.GetSelectedItemText2());
+        }
 
         /// <summary>
         /// Updates variables on the mainfrom which reference the InternalSettings class
@@ -164,7 +167,7 @@ namespace ImViewLite
         {
             if (!Directory.Exists(path))
                 return;
-            
+
             this._PreventOverflow = true;
             path = new DirectoryInfo(path).FullName;
 
@@ -207,7 +210,7 @@ namespace ImViewLite
         {
             if (!PathHelper.IsValidDirectoryPath(this.CurrentDirectory))
                 return;
-            
+
             DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
             if (info.Parent != null)
             {
@@ -261,9 +264,9 @@ namespace ImViewLite
         {
             if (InternalSettings.Ask_Delete_Confirmation_Single)
             {
-                if (MessageBox.Show(this, 
-                    $"Are you sure you want to delete this item?\n{path}", 
-                    "Delete File?", 
+                if (MessageBox.Show(this,
+                    $"Are you sure you want to delete this item?\n{path}",
+                    "Delete File?",
                     MessageBoxButtons.YesNo) == DialogResult.No)
                     return;
             }
@@ -273,7 +276,7 @@ namespace ImViewLite
         public void ReloadCurrentImage()
         {
             string newPath = listView1.GetSelectedItemText2();
-            if(newPath != imageDisplay1.ImagePath)
+            if (newPath != imageDisplay1.ImagePath)
             {
                 LoadImage(newPath);
             }
@@ -372,16 +375,16 @@ namespace ImViewLite
                 }
                 return;
             }
-            
+
             string[] files = new string[listView1.SelectedIndices.Count];
 
             int i = 0;
-            foreach(int ii in listView1.SelectedIndices)
+            foreach (int ii in listView1.SelectedIndices)
             {
                 files[i] = listView1.Items[ii].SubItems[2].Text;
                 i++;
             }
-            ClipboardHelper.CopyFile(files);            
+            ClipboardHelper.CopyFile(files);
         }
 
         public void DeleteSelectedItems()
@@ -397,14 +400,24 @@ namespace ImViewLite
                         return;
                 }
 
-                bool tmp = InternalSettings.Ask_Delete_Confirmation_Single;
-                InternalSettings.Ask_Delete_Confirmation_Single = false;
-
+                string[] del = new string[listView1.SelectedIndices.Count];
+                int c = 0;
                 foreach (int i in listView1.SelectedIndices)
                 {
-                    DeleteFile(listView1.Items[i].SubItems[2].Text);
+                    del[c] = listView1.Items[i].SubItems[2].Text;
+                    c++;
                 }
-                InternalSettings.Ask_Delete_Confirmation_Single = tmp;
+
+                Task.Run(() =>
+                {
+                    bool tmp = InternalSettings.Ask_Delete_Confirmation_Single;
+                    InternalSettings.Ask_Delete_Confirmation_Single = false;
+                    foreach (string i in del)
+                    {
+                        DeleteFile(i);
+                    }
+                    InternalSettings.Ask_Delete_Confirmation_Single = tmp;
+                });
                 return;
             }
 
@@ -412,7 +425,7 @@ namespace ImViewLite
             {
                 DeleteFile(listView1.FocusedItem.SubItems[2].Text);
             }
-        }   
+        }
 
         public void RenameSelectedItems()
         {
@@ -492,7 +505,7 @@ namespace ImViewLite
                         }
                     }
                     return;
-                } 
+                }
             }
 
             if (listView1.FocusedItem != null)
@@ -588,7 +601,7 @@ namespace ImViewLite
         {
             string path;
 
-            if(args != null && args.Length > 0)
+            if (args != null && args.Length > 0)
             {
                 path = args[0];
             }
@@ -599,23 +612,23 @@ namespace ImViewLite
 
             switch (cmd)
             {
-                case Command.Nothing:               break;
-                case Command.CopyImage:             imageDisplay1.CopyImage(); break;
-                case Command.PauseGif:              imageDisplay1.AnimationPaused = !imageDisplay1.AnimationPaused; break;
-                case Command.InvertColor:           imageDisplay1.InvertColor(); break;
-                case Command.Grayscale:             imageDisplay1.ConvertGrayscale(); break;
-                case Command.NextFrame:             imageDisplay1.NextImageFrame(); break;
-                case Command.PreviousFrame:         imageDisplay1.PreviousImageFrame(); break;
-                case Command.UpDirectoryLevel:      UpDirectoryLevel(); break;
+                case Command.Nothing: break;
+                case Command.CopyImage: imageDisplay1.CopyImage(); break;
+                case Command.PauseGif: imageDisplay1.AnimationPaused = !imageDisplay1.AnimationPaused; break;
+                case Command.InvertColor: imageDisplay1.InvertColor(); break;
+                case Command.Grayscale: imageDisplay1.ConvertGrayscale(); break;
+                case Command.NextFrame: imageDisplay1.NextImageFrame(); break;
+                case Command.PreviousFrame: imageDisplay1.PreviousImageFrame(); break;
+                case Command.UpDirectoryLevel: UpDirectoryLevel(); break;
                 case Command.OpenSelectedDirectory: UpdateDirectory(path, true); break;
-                case Command.MoveImage:             MoveSelectedFiles(path); break;
-                case Command.RenameImage:           RenameSelectedItems(); break;
-                case Command.DeleteImage:           DeleteSelectedItems(); break;
-                case Command.ToggleAlwaysOnTop:     ToggleAlwaysOnTop(); break;
-                case Command.OpenColorPicker:       OpenColorPicker(); break;
-                case Command.OpenSettings:          OpenSettings(); break;
-                case Command.OpenWithDefaultProgram:OpenSelectedItems(); break;
-                case Command.OpenExplorerAtLocation:OpenExplorerAtSelectedItems(); break;
+                case Command.MoveImage: MoveSelectedFiles(path); break;
+                case Command.RenameImage: RenameSelectedItems(); break;
+                case Command.DeleteImage: DeleteSelectedItems(); break;
+                case Command.ToggleAlwaysOnTop: ToggleAlwaysOnTop(); break;
+                case Command.OpenColorPicker: OpenColorPicker(); break;
+                case Command.OpenSettings: OpenSettings(); break;
+                case Command.OpenWithDefaultProgram: OpenSelectedItems(); break;
+                case Command.OpenExplorerAtLocation: OpenExplorerAtSelectedItems(); break;
             }
         }
 
@@ -623,14 +636,14 @@ namespace ImViewLite
         private void MainForm_KeyUp(object sender, KeyEventArgs e)
         {
             base.OnKeyDown(e);
-            
-            if(!_IsUsingTextbox)
-            if (InternalSettings.CurrentUserSettings.Binds.ContainsKey(e.KeyData))
-            {
-                ExecuteCommand(
-                    InternalSettings.CurrentUserSettings.Binds[e.KeyData].Function,
-                    InternalSettings.CurrentUserSettings.Binds[e.KeyData].Args);
-            }
+
+            if (!_IsUsingTextbox)
+                if (InternalSettings.CurrentUserSettings.Binds.ContainsKey(e.KeyData))
+                {
+                    ExecuteCommand(
+                        InternalSettings.CurrentUserSettings.Binds[e.KeyData].Function,
+                        InternalSettings.CurrentUserSettings.Binds[e.KeyData].Args);
+                }
         }
 
         public void LoadImage(string path)
@@ -723,7 +736,6 @@ namespace ImViewLite
             //Caching is not required but improves performance on large sets.
             //To leave out caching, don't connect the CacheVirtualItems event 
             //and make sure myCache is null.
-
             //check to see if the requested item is currently in the cache
             if (_ListViewItemCache != null && e.ItemIndex >= _CahceItem1 && e.ItemIndex < _CahceItem1 + _ListViewItemCache.Length)
             {
@@ -777,7 +789,6 @@ namespace ImViewLite
                 //no need to rebuild everything, so do nothing.
                 return;
             }
-
             //Now we need to rebuild the cache.
             _CahceItem1 = e.StartIndex;
 
@@ -798,7 +809,7 @@ namespace ImViewLite
                 {
                     DirectoryInfo dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[index]);
                     ListViewItemEx ditem = new ListViewItemEx(dinfo.Name);
-                    //ditem.SelectionChanged += ListViewItem_Click;
+                    
                     ditem.SubItems.Add("");
                     ditem.SubItems.Add(dinfo.FullName);
 
@@ -816,7 +827,7 @@ namespace ImViewLite
                 {
                     DirectoryInfo dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[index]);
                     ListViewItemEx ditem = new ListViewItemEx(dinfo.Name);
-                    //ditem.SelectionChanged += ListViewItem_Click;
+                    
                     ditem.SubItems.Add("");
                     ditem.SubItems.Add(dinfo.FullName);
 
@@ -829,19 +840,18 @@ namespace ImViewLite
                 {
                     FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
                     ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
-                    //fitem.SelectionChanged += ListViewItem_Click;
+                    
                     if (finfo.Exists)
                     {
                         fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
                     }
                     else
                     {
-                        fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
+                        fitem.SubItems.Add("DELETED");
                     }
                     fitem.SubItems.Add(finfo.FullName);
 
                     _ListViewItemCache[count] = fitem;
-
                     count++;
                 }
                 return;
@@ -854,7 +864,14 @@ namespace ImViewLite
                 FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
                 ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
                 //fitem.SelectionChanged += ListViewItem_Click;
-                fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                if (finfo.Exists)
+                {
+                    fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                }
+                else
+                {
+                    fitem.SubItems.Add("DELETED");
+                }
                 fitem.SubItems.Add(finfo.FullName);
 
                 _ListViewItemCache[count] = fitem;
@@ -893,7 +910,7 @@ namespace ImViewLite
 
             string text = textBox1.Text;
 
-            if(string.IsNullOrEmpty(text) || text == "\"\"")
+            if (string.IsNullOrEmpty(text) || text == "\"\"")
             {
                 LoadDirectory("", true);
             }
@@ -915,55 +932,54 @@ namespace ImViewLite
 
         private void _FolderWatcher_DirectoryAdded(string name)
         {
-            this.listView1.InvokeSafe(() => {
-                this.listView1.VirtualListSize++; 
-                RefreshListView();
-            });
+            this.listView1.InvokeSafe((Action)(() =>
+            {
+                this.listView1.VirtualListSize++;
+                this.RefreshListView();
+            }));
         }
 
         private void _FolderWatcher_FileAdded(string name)
         {
-            this.listView1.InvokeSafe(() => { 
-                this.listView1.VirtualListSize++; 
-                RefreshListView();
-            });
+            this.listView1.InvokeSafe((Action)(() =>
+            {
+                this.listView1.VirtualListSize++;
+                this.RefreshListView();
+            }));
         }
 
         private void _FolderWatcher_DirectoryRemoved(string name)
         {
-            this.listView1.InvokeSafe(() => { 
-                this.listView1.VirtualListSize--; 
-                RefreshListView();
-
-                if (InternalSettings.Agressive_Image_Unloading)
-                    ReloadCurrentImage();
-            });
+            this.listView1.InvokeSafe((Action)(() =>
+            {
+                this.listView1.VirtualListSize--;
+                this.RefreshListView();
+            }));
         }
 
         private void _FolderWatcher_FileRemoved(string name)
         {
-            this.listView1.InvokeSafe(() => { 
-                this.listView1.VirtualListSize--; 
-                RefreshListView();
-                
-                if (InternalSettings.Agressive_Image_Unloading)
-                    ReloadCurrentImage();
-            });
-
-            
+            this.listView1.InvokeSafe((Action)(() =>
+            {
+                this.listView1.VirtualListSize--;
+                this.RefreshListView();
+            }));
         }
 
         private void _FolderWatcher_FileRenamed(string newName, string oldName)
         {
-            Console.WriteLine("refreshing listview");
-            RefreshListView();
-            listView1.Invalidate();
+            this.InvokeSafe((Action)(() =>
+            {
+                this.RefreshListView();
+            }));
         }
 
         private void _FolderWatcher_DirectoryRenamed(string newName, string oldName)
         {
-            RefreshListView();
-            listView1.Invalidate();
+            this.InvokeSafe((Action)(() =>
+            {
+                this.RefreshListView();
+            }));
         }
 
         private void UpArrowButton_Click(object sender, EventArgs e)
@@ -1060,7 +1076,7 @@ namespace ImViewLite
 
         private void defaultToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(listView1.FocusedItem != null)
+            if (listView1.FocusedItem != null)
             {
                 ClipboardHelper.CopyImageFromFile(listView1.FocusedItem.SubItems[2].Text);
             }

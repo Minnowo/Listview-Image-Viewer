@@ -10,6 +10,82 @@ using ImViewLite.Settings;
 
 namespace ImViewLite.Misc
 {
+
+    public class FileProcessor : IDisposable
+    {
+        public delegate void ProcessFileEvent(object name);
+        public event ProcessFileEvent ProcessFile;
+
+        private readonly object _Locker = new object();
+        private EventWaitHandle _EventWaitHandle = new AutoResetEvent(false);
+        private Queue<object> _FileNamesQueue = new Queue<object>();
+
+        private Thread _Worker;
+        private bool _Working = true;
+
+        public FileProcessor()
+        {
+            _Worker = new Thread(Work);
+            _Worker.Start();
+        }
+
+        public void KillWorker()
+        {
+            _Working = false;
+            EnqueueFileName(null);
+        }
+
+        public void EnqueueFileName(object FileName)
+        {
+            lock (_Locker) 
+            { 
+                _FileNamesQueue.Enqueue(FileName); 
+            }
+            _EventWaitHandle.Set();
+        }
+
+        private void OnProcessFile(object filename)
+        {
+            if(ProcessFile != null)
+            {
+                ProcessFile.Invoke(filename);
+            }
+        }
+
+        private void Work()
+        {
+            while (_Working)
+            {
+                object fileName = null;
+
+                lock (_Locker)
+                {
+                    if (_FileNamesQueue.Count > 0)
+                    {
+                        fileName = _FileNamesQueue.Dequeue();
+                    }
+                }
+                if (fileName != null)
+                {
+                    OnProcessFile(fileName);
+                }
+                else
+                {
+                    // No more file names - wait for a signal
+                    _EventWaitHandle.WaitOne();
+                }
+            }
+        }
+
+        public void Dispose()
+        {
+            KillWorker();
+            _Worker.Join();
+            _EventWaitHandle.Close();
+            GC.SuppressFinalize(this);
+        }
+    }
+
     public class FolderWatcher : IDisposable
     {
         public delegate void FileAddedEvent(string name);
@@ -43,18 +119,10 @@ namespace ImViewLite.Misc
         public List<string> DirectoryCache;        // list of sorted directories for the current directory
         public List<string> FileCache;             // list of sorted files for the current directory
 
-        private Queue<RenamedEventArgs> _ItemRenamedQueue = new Queue<RenamedEventArgs>();
-        private Queue<string> _ItemDeletedQueue = new Queue<string>();
-        private Queue<string> _FileCreatedQueue = new Queue<string>();
-        private Queue<string> _DirectoryCreatedQueue = new Queue<string>();
-
-        // switched to using a timer and queue to prevent buffer overflow of the FileSystemWatcher
-        // otherwise the FileSystemWatcher will skip / miss files that are deleted causing lots of issues
-        // modified TIMER class allows for the use of the timer on non-ui threads
-        private TIMER _EmptyItemRenamedQueueTimer = new TIMER() { Interval = 200 };
-        private TIMER _EmptyItemDeletedQueueTimer = new TIMER() { Interval = 200 };
-        private TIMER _EmptyFileCreatedQueueTimer = new TIMER() { Interval = 200 };
-        private TIMER _EmptyDirectoryCreatedQueueTimer = new TIMER() { Interval = 200 };
+        private FileProcessor _ItemRenamed = new FileProcessor();
+        private FileProcessor _ItemDeleted = new FileProcessor();
+        private FileProcessor _FileCreated = new FileProcessor();
+        private FileProcessor _DirectoryCreated = new FileProcessor();
 
         private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
         private string directory;
@@ -63,10 +131,11 @@ namespace ImViewLite.Misc
         private Task FileSortThread;
         public FolderWatcher()
         {
-            _EmptyFileCreatedQueueTimer.Tick += _EmptyFileCreatedQueueTimer_Tick;
-            _EmptyDirectoryCreatedQueueTimer.Tick += _EmptyDirectoryCreatedQueueTimer_Tick;
-            _EmptyItemDeletedQueueTimer.Tick += _EmptyItemDeletedQueueTimer_Tick;
-            _EmptyItemRenamedQueueTimer.Tick += _EmptyItemRenamedQueueTimer_Tick;
+            _ItemRenamed.ProcessFile += Process_ItemRenamed;
+            _ItemDeleted.ProcessFile += Process_ItemDeleted;
+            _FileCreated.ProcessFile += Process_FileCreated;
+            _DirectoryCreated.ProcessFile += Process_DirectoryCreated;
+
             directory = "";
             CreateWatchers(Directory.GetCurrentDirectory(), false);
             FileCache = new List<string>();
@@ -77,10 +146,11 @@ namespace ImViewLite.Misc
 
         public FolderWatcher(string path)
         {
-            _EmptyFileCreatedQueueTimer.Tick += _EmptyFileCreatedQueueTimer_Tick;
-            _EmptyDirectoryCreatedQueueTimer.Tick += _EmptyDirectoryCreatedQueueTimer_Tick;
-            _EmptyItemDeletedQueueTimer.Tick += _EmptyItemDeletedQueueTimer_Tick;
-            _EmptyItemRenamedQueueTimer.Tick += _EmptyItemRenamedQueueTimer_Tick;
+            _ItemRenamed.ProcessFile += Process_ItemRenamed;
+            _ItemDeleted.ProcessFile += Process_ItemDeleted;
+            _FileCreated.ProcessFile += Process_FileCreated;
+            _DirectoryCreated.ProcessFile += Process_DirectoryCreated;
+
             directory = path;
 
             if (!Directory.Exists(path))
@@ -95,75 +165,45 @@ namespace ImViewLite.Misc
             SetFiles(path);
         }
 
-        private void _EmptyItemRenamedQueueTimer_Tick(object sender, EventArgs e)
+        private void Process_ItemRenamed(object item)
         {
-            _EmptyItemRenamedQueueTimer.Stop();
-
-            WaitThreadsFinished();
-
-            RenamedEventArgs ea;
-            while(_ItemRenamedQueue.Count != 0)
-            {
-                ea = _ItemRenamedQueue.Dequeue();
-
-                if (FileCache.Remove(ea.OldName))
-                {
-                    BinaryInsertFileCache(ea.Name,  false);
-                    OnFileRenamed(ea.Name, ea.OldName);
-                }
-
-                if (DirectoryCache.Remove(ea.OldName))
-                {
-                    BinaryInsertDirectoryCache(ea.Name,  false);
-                    OnDirectoryRenamed(ea.Name, ea.OldName);
-                }
-            }
-        }
-
-        private void _EmptyItemDeletedQueueTimer_Tick(object sender, EventArgs e)
-        {
-            _EmptyItemDeletedQueueTimer.Stop();
-
-            WaitThreadsFinished();
-
-            string name;
-            while (_ItemDeletedQueue.Count != 0)
-            {
-                name = _ItemDeletedQueue.Dequeue();
-
-                if (FileCache.Remove(name))
-                {
-                    OnFileRemoved(name);
-                }
-                if (DirectoryCache.Remove(name))
-                {
-                    OnDirectoryRemoved(name);
-                }
-            }
-        }
-
-        private void _EmptyFileCreatedQueueTimer_Tick(object sender, EventArgs e)
-        {
-            _EmptyFileCreatedQueueTimer.Stop();
+            RenamedEventArgs e = item as RenamedEventArgs;
             
-            WaitThreadsFinished(true);
-            
-            while (_FileCreatedQueue.Count != 0)
+            if (FileCache.Remove(e.OldName))
             {
-                BinaryInsertFileCache(_FileCreatedQueue.Dequeue());
+                BinaryInsertFileCache(e.Name,  false);
+                OnFileRenamed(e.Name, e.OldName);
+            }
+
+            if (DirectoryCache.Remove(e.OldName))
+            {
+                BinaryInsertDirectoryCache(e.Name,  false);
+                OnDirectoryRenamed(e.Name, e.OldName);
             }
         }
 
-        private void _EmptyDirectoryCreatedQueueTimer_Tick(object sender, EventArgs e)
+        private void Process_ItemDeleted(object item)
         {
-            _EmptyDirectoryCreatedQueueTimer.Stop();
+            string name = item as string;
 
-            WaitThreadsFinished(false);
-
-            while (_DirectoryCreatedQueue.Count != 0)
+            if (FileCache.Remove(name))
             {
-                BinaryInsertDirectoryCache(_DirectoryCreatedQueue.Dequeue());
+                OnFileRemoved(name);
             }
+            if (DirectoryCache.Remove(name))
+            {
+                OnDirectoryRemoved(name);
+            }
+        }
+
+        private void Process_FileCreated(object item)
+        {
+            BinaryInsertFileCache(item as string);
+        }
+
+        private void Process_DirectoryCreated(object item)
+        {
+            BinaryInsertDirectoryCache(item as string);
         }
 
         /// <summary>
@@ -245,33 +285,25 @@ namespace ImViewLite.Misc
 
         private void ItemRenamed(object sender, RenamedEventArgs e)
         {
-            _ItemRenamedQueue.Enqueue(e);
-            _EmptyItemRenamedQueueTimer.Stop();
-            _EmptyItemRenamedQueueTimer.Start();
+            _ItemRenamed.EnqueueFileName(e);
         }
 
         private void ItemCreated(object sender, FileSystemEventArgs e)
         {
             if (File.Exists(e.FullPath))
             {
-                _FileCreatedQueue.Enqueue(e.Name);
-                _EmptyFileCreatedQueueTimer.Stop();
-                _EmptyFileCreatedQueueTimer.Start();
+                _FileCreated.EnqueueFileName(e.Name);
             }
             else if (Directory.Exists(e.FullPath))
             {
-                _DirectoryCreatedQueue.Enqueue(e.Name);
-                _EmptyDirectoryCreatedQueueTimer.Stop();
-                _EmptyDirectoryCreatedQueueTimer.Start();
+                _DirectoryCreated.EnqueueFileName(e.Name);
             }
         }
 
 
         private void ItemDeleted(object sender, FileSystemEventArgs e)
         {
-            _ItemDeletedQueue.Enqueue(e.Name);
-            _EmptyItemDeletedQueueTimer.Stop();
-            _EmptyItemDeletedQueueTimer.Start();
+            _ItemDeleted.EnqueueFileName(e.Name);
         }
 
         private void SetFiles(string path)
@@ -415,18 +447,19 @@ namespace ImViewLite.Misc
                 fsw.Dispose();
             }
 
-            this._EmptyFileCreatedQueueTimer.Tick -= _EmptyFileCreatedQueueTimer_Tick;
-            this._EmptyItemDeletedQueueTimer.Tick -= _EmptyItemDeletedQueueTimer_Tick;
-            this._EmptyDirectoryCreatedQueueTimer.Tick -= _EmptyDirectoryCreatedQueueTimer_Tick;
-            this._EmptyItemRenamedQueueTimer.Tick -= _EmptyItemRenamedQueueTimer_Tick;
-            this.watchers.Clear();
-            
             WaitThreadsFinished();
-            
-            this._EmptyFileCreatedQueueTimer?.Dispose();
-            this._EmptyItemDeletedQueueTimer?.Dispose();
-            this._EmptyDirectoryCreatedQueueTimer?.Dispose();
-            this._EmptyItemRenamedQueueTimer?.Dispose();
+            this.watchers.Clear();
+
+            _ItemRenamed.ProcessFile -= Process_ItemRenamed;
+            _ItemDeleted.ProcessFile -= Process_ItemDeleted;
+            _FileCreated.ProcessFile -= Process_FileCreated;
+            _DirectoryCreated.ProcessFile -= Process_DirectoryCreated;
+
+            this._ItemDeleted?.Dispose();
+            this._ItemRenamed?.Dispose();
+            this._FileCreated?.Dispose();
+            this._DirectoryCreated?.Dispose();
+
             this.FileCache.Clear();
             this.FileSortThread?.Dispose();
             this.DirectoryCache.Clear();
