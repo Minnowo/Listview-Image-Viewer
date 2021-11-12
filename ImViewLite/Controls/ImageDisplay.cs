@@ -320,13 +320,15 @@ namespace ImViewLite.Controls
             this.Zoom = zoom;
         }
 
+        int drx = 0;
+        int dry = 0;
         private Rectangle GetImageViewPort()
         {
             if (this._Image == null)
                 return Rectangle.Empty;
 
-            int centerX = 0;
-            int centerY = 0;
+            int centerX = drx;
+            int centerY = dry;
             int width = this._Image.Width;
             int height = this._Image.Height;
             switch (this.DrawMode)
@@ -379,6 +381,49 @@ namespace ImViewLite.Controls
                 return RectangleF.Empty;
             return new RectangleF(0, 0, this._Image.Width, this._Image.Height);
         }
+
+        /*Point cs;
+        bool isLeftClicking = false;
+        protected override void OnMouseDown(MouseEventArgs e)
+        {
+            base.OnMouseDown(e);
+            if(e.Button == MouseButtons.Left)
+            {
+                cs = e.Location;
+                isLeftClicking = true;
+            }
+            if(e.Button == MouseButtons.Right)
+            {
+                drx = 0;
+                dry = 0;
+                Invalidate();
+            }
+        }
+        protected override void OnMouseUp(MouseEventArgs e)
+        {
+            base.OnMouseUp(e);
+            if (e.Button == MouseButtons.Left)
+            {
+                isLeftClicking = false;
+            }
+        }
+        protected override void OnMouseMove(MouseEventArgs e)
+        {
+            base.OnMouseMove(e);
+            if (isLeftClicking)
+            {
+                drx -= cs.X - e.X;
+                if (drx > this.Width)
+                    drx = this.Width;
+
+                dry -= cs.Y - e.Y;
+                if (dry > this.Height)
+                    dry = this.Height;
+
+                cs = e.Location;
+                Invalidate();
+            }
+        }*/
 
         private void DrawImage(Graphics g)
         {

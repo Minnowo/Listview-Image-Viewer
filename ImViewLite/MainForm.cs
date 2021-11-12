@@ -52,7 +52,6 @@ namespace ImViewLite
         private Stack<string> _FolderRedoHistory = new Stack<string>();
 
         private TIMER _LoadImageTimer = new TIMER() { Interval = 50 };
-        private Regex _MatchFilePath = new Regex("\"(?<path>[^\"]*)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private bool _IsUsingTextbox = false;
         private bool _PreventOverflow = false;
         private bool _Undo = false;
@@ -62,17 +61,25 @@ namespace ImViewLite
         {
             InitializeComponent();
             SuspendLayout();
+            //this.imageDisplay1.CenterImage = false;
             this.imageDisplay1.CellScale = 1;
             this.imageDisplay1.CellSize = InternalSettings.Grid_Cell_Size;
             this.imageDisplay1.CellColor1 = InternalSettings.Image_Box_Back_Color;
             this.imageDisplay1.CellColor2 = InternalSettings.Image_Box_Back_Color_Alternate;
-            this.imageDisplay1.DrawMode = ImViewLite.Controls.DrawMode.ScaleImage;
+            this.imageDisplay1.InterpolationMode = InternalSettings.Default_Interpolation_Mode;
+            this.imageDisplay1.DrawMode = InternalSettings.Default_Draw_Mode;
 
             tscbInterpolationMode.Items.Add(System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor);
             tscbInterpolationMode.Items.Add(System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic);
             tscbInterpolationMode.Items.Add(System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear);
             tscbInterpolationMode.SelectedItem = InternalSettings.Default_Interpolation_Mode;
             tscbInterpolationMode.SelectedIndexChanged += TscbInterpolationMode_SelectedIndexChanged;
+
+            tscbDrawMode.Items.Add(ImViewLite.Controls.DrawMode.ActualSize);
+            tscbDrawMode.Items.Add(ImViewLite.Controls.DrawMode.FitImage);
+            tscbDrawMode.Items.Add(ImViewLite.Controls.DrawMode.ScaleImage);
+            tscbDrawMode.SelectedItem = InternalSettings.Default_Draw_Mode;
+            tscbDrawMode.SelectedIndexChanged += TscbDrawMode_SelectedIndexChanged;
 
             _FolderWatcher = new FolderWatcher();
             _FolderWatcher.FileRemoved += _FolderWatcher_FileRemoved;
@@ -106,6 +113,8 @@ namespace ImViewLite
             LoadDirectory("");
         }
 
+       
+
         public void RefreshListView()
         {
             //lock (_CacheLock)
@@ -118,6 +127,13 @@ namespace ImViewLite
                 DelayLoadImage(this.listView1.GetSelectedItemText2());
         }
 
+        public void UpdateTextbox()
+        {
+            this._PreventOverflow = true;
+            this.textBox1.Text = $"{_CurrentDirectory}";
+            this._PreventOverflow = false;
+        }
+
         public void UndoPreviousDirectory()
         {
             if (_FolderRedoHistory.Count < 1)
@@ -127,6 +143,7 @@ namespace ImViewLite
             this._FolderUndoHistory.Push(this._CurrentDirectory);
             this.LoadDirectory(this._FolderRedoHistory.Pop());
             this._Undo = false;
+            UpdateTextbox();
         }
 
         public void PreviousDirectory()
@@ -138,6 +155,7 @@ namespace ImViewLite
             this._FolderRedoHistory.Push(this._CurrentDirectory);
             this.LoadDirectory(this._FolderUndoHistory.Pop());
             this._Undo = false;
+            UpdateTextbox();
         }
 
         /// <summary>
@@ -150,6 +168,8 @@ namespace ImViewLite
             this.imageDisplay1.CellColor1 = InternalSettings.Image_Box_Back_Color;
             this.imageDisplay1.CellColor2 = InternalSettings.Image_Box_Back_Color_Alternate;
             this.listView1.FullRowSelect = InternalSettings.Full_Row_Select;
+            this.imageDisplay1.InterpolationMode = InternalSettings.Default_Interpolation_Mode;
+            this.imageDisplay1.DrawMode = InternalSettings.Default_Draw_Mode;
         }
 
         /// <summary>
@@ -209,7 +229,7 @@ namespace ImViewLite
 
             if (updateTextbox)
             {
-                this.textBox1.Text = $"\"{path}\"";
+                UpdateTextbox();
             }
             this._PreventOverflow = false;
         }
@@ -984,25 +1004,26 @@ namespace ImViewLite
             imageDisplay1.InterpolationMode = InternalSettings.Default_Interpolation_Mode;
         }
 
+        private void TscbDrawMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            InternalSettings.Default_Draw_Mode = (ImViewLite.Controls.DrawMode)tscbDrawMode.SelectedItem;
+            imageDisplay1.DrawMode = InternalSettings.Default_Draw_Mode;
+        }
 
         private void InputTextbox_TextChanged(object sender, EventArgs e)
         {
             if (_PreventOverflow)
                 return;
 
-            string text = textBox1.Text;
+            string text = textBox1.Text.Trim();
 
-            if (string.IsNullOrEmpty(text) || text == "\"\"")
+            if (string.IsNullOrEmpty(text))
             {
                 LoadDirectory("", true);
             }
 
-            Match m = _MatchFilePath.Match(text);
-
-            if (m.Success)
+            if (PathHelper.IsValidDirectoryPath(text))
             {
-                text = m.Groups["path"].Value;
-
                 UpdateDirectory(text);
             }
         }
@@ -1211,6 +1232,11 @@ namespace ImViewLite
         private void fileNameToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CopySelectedFileNames();
+        }
+
+        private void toolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            ExecuteCommand(Command.OpenColorPicker);
         }
     }
 }

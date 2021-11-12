@@ -141,6 +141,11 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.Default_Interpolation_Mode = value; }
         }
 
+        public static ImViewLite.Controls.DrawMode Default_Draw_Mode
+        {
+            get { return CurrentUserSettings.Default_Draw_mode; }
+            set { CurrentUserSettings.Default_Draw_mode = value; }
+        }
 
 
         public static Color Fill_Transparency_On_Copy_Color
@@ -473,7 +478,8 @@ namespace ImViewLite.Settings
         [Description("The default interpolation mode."), DisplayName("Interpolation Mode")]
         public InterpolationMode Default_Interpolation_Mode { get; set; } = InterpolationMode.NearestNeighbor;
 
-
+        [XmlIgnore]
+        public ImViewLite.Controls.DrawMode Default_Draw_mode { get; set; } = ImViewLite.Controls.DrawMode.ScaleImage;
 
         [Browsable(false)]
         [XmlElement("Default_Interpolation_Mode")]
@@ -481,6 +487,14 @@ namespace ImViewLite.Settings
         {
             get { return (int)Default_Interpolation_Mode; }
             set { Default_Interpolation_Mode = (InterpolationMode)value; }
+        }
+
+        [Browsable(false)]
+        [XmlElement("Default_Draw_Mode")]
+        public int Default_Draw__ModeAsInt
+        {
+            get { return (int)Default_Draw_mode; }
+            set { Default_Draw_mode = (ImViewLite.Controls.DrawMode)value; }
         }
 
 
