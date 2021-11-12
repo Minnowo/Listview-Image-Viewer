@@ -29,6 +29,8 @@ namespace ImViewLite.Enums
                 case Command.OpenSettings: return "Open Settings";
                 case Command.OpenWithDefaultProgram: return "Open With Default Program";
                 case Command.OpenExplorerAtLocation: return "Open Explorer At Location";
+                case Command.LastDirectory: return "Last Directory";
+                case Command.UndoLastDirectory: return "Undo Previous Directory";
             }
             return string.Empty;
         }

@@ -115,6 +115,8 @@ namespace ImViewLite.Forms
                 case Command.OpenExplorerAtLocation:
                 case Command.RenameImage:
                 case Command.UpDirectoryLevel:
+                case Command.LastDirectory:
+                case Command.UndoLastDirectory:
                     return 0;
             }
             return 0;

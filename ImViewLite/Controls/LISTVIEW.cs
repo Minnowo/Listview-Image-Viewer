@@ -74,6 +74,12 @@ namespace ImViewLite.Controls
                     _IsRightClick = false;
                     OnRightClick();
                     break;
+
+                case MouseButtons.XButton1:
+                    break;
+
+                case MouseButtons.XButton2:
+                    break;
             }
         }
 

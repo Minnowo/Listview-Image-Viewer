@@ -30,6 +30,12 @@ namespace ImViewLite
                 if (this._CurrentDirectory == value)
                     return;
 
+                if (!_Undo)
+                {
+                    _FolderUndoHistory.Push(this._CurrentDirectory);
+                    _FolderRedoHistory.Clear();
+                }
+
                 this.Text = value;
                 this._CurrentDirectory = value;
                 this.LoadDirectory(value);
@@ -42,11 +48,14 @@ namespace ImViewLite
         private int _CahceItem1;                     // stores the index of the first item in the cache
         private ListViewItemEx[] _ListViewItemCache; // array to cache items for the virtual list
         private FolderWatcher _FolderWatcher;
+        private Stack<string> _FolderUndoHistory = new Stack<string>();
+        private Stack<string> _FolderRedoHistory = new Stack<string>();
 
         private TIMER _LoadImageTimer = new TIMER() { Interval = 50 };
         private Regex _MatchFilePath = new Regex("\"(?<path>[^\"]*)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private bool _IsUsingTextbox = false;
         private bool _PreventOverflow = false;
+        private bool _Undo = false;
         //private object _CacheLock = new object();
 
         public MainForm()
@@ -107,6 +116,28 @@ namespace ImViewLite
 
             if (InternalSettings.Agressive_Image_Unloading)
                 DelayLoadImage(this.listView1.GetSelectedItemText2());
+        }
+
+        public void UndoPreviousDirectory()
+        {
+            if (_FolderRedoHistory.Count < 1)
+                return;
+
+            this._Undo = true;
+            this._FolderUndoHistory.Push(this._CurrentDirectory);
+            this.LoadDirectory(this._FolderRedoHistory.Pop());
+            this._Undo = false;
+        }
+
+        public void PreviousDirectory()
+        {
+            if (_FolderUndoHistory.Count < 1)
+                return;
+            
+            this._Undo = true;
+            this._FolderRedoHistory.Push(this._CurrentDirectory);
+            this.LoadDirectory(this._FolderUndoHistory.Pop());
+            this._Undo = false;
         }
 
         /// <summary>
@@ -631,6 +662,8 @@ namespace ImViewLite
                 case Command.OpenSettings: OpenSettings(); break;
                 case Command.OpenWithDefaultProgram: OpenSelectedItems(); break;
                 case Command.OpenExplorerAtLocation: OpenExplorerAtSelectedItems(); break;
+                case Command.LastDirectory: PreviousDirectory(); break;
+                case Command.UndoLastDirectory: UndoPreviousDirectory(); break;
             }
         }
 
