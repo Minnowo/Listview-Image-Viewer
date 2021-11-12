@@ -20,8 +20,9 @@ namespace ImViewLite
 {
     public partial class MainForm : Form
     {
-        delegate void UniversalVoidDelegate();
-
+        /// <summary>
+        /// The current worker directory / displayed directory
+        /// </summary>
         public string CurrentDirectory
         {
             get { return _CurrentDirectory; }
@@ -41,21 +42,57 @@ namespace ImViewLite
                 this.LoadDirectory(value);
             }
         }
-
-        public ListViewItem SelectedItem;
-
         private string _CurrentDirectory = "";
-        private int _CahceItem1;                     // stores the index of the first item in the cache
-        private ListViewItemEx[] _ListViewItemCache; // array to cache items for the virtual list
+
+        /// <summary>
+        /// Used to store the file path of the image that is going to be loaded once the LoadImageTimer_Tick event is called
+        /// </summary>
+        private string _Image_Delay = "";
+
+        /// <summary>
+        /// Keeps track of the first index of the first item in the item cache
+        /// </summary>
+        private int _CahceItem1;                     
+
+        /// <summary>
+        /// Items currently displayed in the listview
+        /// </summary>
+        private ListViewItemEx[] _ListViewItemCache;
+
+        /// <summary>
+        /// Keeps track of the current directory, watches for system changes and contains FileCache and DirectoryCache
+        /// </summary>
         private FolderWatcher _FolderWatcher;
+
+        /// <summary>
+        /// The previously visited directories 
+        /// </summary>
         private Stack<string> _FolderUndoHistory = new Stack<string>();
+
+        /// <summary>
+        /// The previously visited directories after they've been undone
+        /// </summary>
         private Stack<string> _FolderRedoHistory = new Stack<string>();
 
+        /// <summary>
+        /// Timer to load the image 
+        /// </summary>
         private TIMER _LoadImageTimer = new TIMER() { Interval = 50 };
+
+        /// <summary>
+        /// Is the textbox currently active / selected
+        /// </summary>
         private bool _IsUsingTextbox = false;
+
+        /// <summary>
+        /// Prevents overflow errors from event callbacks looping
+        /// </summary>
         private bool _PreventOverflow = false;
+
+        /// <summary>
+        /// Is an undo / redo occuring
+        /// </summary>
         private bool _Undo = false;
-        //private object _CacheLock = new object();
 
         public MainForm()
         {
@@ -88,6 +125,7 @@ namespace ImViewLite
             _FolderWatcher.DirectoryAdded += _FolderWatcher_DirectoryAdded;
             _FolderWatcher.DirectoryRenamed += _FolderWatcher_DirectoryRenamed;
             _FolderWatcher.FileRenamed += _FolderWatcher_FileRenamed;
+            _FolderWatcher.ItemChanged += _FolderWatcher_ItemChanged;
 
             this.listView1.VirtualMode = true;
             this.listView1.VirtualListSize = 0;
@@ -113,8 +151,12 @@ namespace ImViewLite
             LoadDirectory("");
         }
 
-       
+        
 
+
+        /// <summary>
+        /// Empties the listview item cache and redraws the listview
+        /// </summary>
         public void RefreshListView()
         {
             //lock (_CacheLock)
@@ -127,6 +169,9 @@ namespace ImViewLite
                 DelayLoadImage(this.listView1.GetSelectedItemText2());
         }
 
+        /// <summary>
+        /// Updates the text of the textbox to the current directory
+        /// </summary>
         public void UpdateTextbox()
         {
             this._PreventOverflow = true;
@@ -134,6 +179,9 @@ namespace ImViewLite
             this._PreventOverflow = false;
         }
 
+        /// <summary>
+        /// Takes the user back to the directory before the previous directory
+        /// </summary>
         public void UndoPreviousDirectory()
         {
             if (_FolderRedoHistory.Count < 1)
@@ -146,6 +194,9 @@ namespace ImViewLite
             UpdateTextbox();
         }
 
+        /// <summary>
+        /// Takes the user back to the previous directory
+        /// </summary>
         public void PreviousDirectory()
         {
             if (_FolderUndoHistory.Count < 1)
@@ -311,7 +362,12 @@ namespace ImViewLite
             cpf.Show();
         }
 
-        public void DeleteFile(string path)
+        /// <summary>
+        /// Deletes the given path.
+        /// Asks the user to confirm if the setting is enabled.
+        /// </summary>
+        /// <param name="path">The pat hto delete.</param>
+        public void DeletePath(string path)
         {
             if (InternalSettings.Ask_Delete_Confirmation_Single)
             {
@@ -324,6 +380,9 @@ namespace ImViewLite
             PathHelper.DeleteFileOrPath(path);
         }
 
+        /// <summary>
+        /// Reloads the currently displayed image if the path is different
+        /// </summary>
         public void ReloadCurrentImage()
         {
             string newPath = listView1.GetSelectedItemText2();
@@ -333,6 +392,10 @@ namespace ImViewLite
             }
         }
 
+        /// <summary>
+        /// Copies the text of the currently selected subitems to clipboard
+        /// </summary>
+        /// <param name="index"></param>
         public void CopySelectedItemText(int index)
         {
             if (listView1.SelectedIndices.Count < 2)
@@ -355,6 +418,11 @@ namespace ImViewLite
             ClipboardHelper.CopyText(paths.ToString());
         }
 
+        /// <summary>
+        /// Copies the file size in the given unit for all selected listview items.
+        /// </summary>
+        /// <param name="size">The size unit.</param>
+        /// <param name="decimalPlaces">The number of decimal places.</param>
         public void CopySelectedItemsSize(FileSizeUnit size, int decimalPlaces = 1)
         {
             FileInfo info;
@@ -381,16 +449,26 @@ namespace ImViewLite
             ClipboardHelper.CopyText(paths.ToString());
         }
 
+        /// <summary>
+        /// Copies the file names of the selected listview items
+        /// </summary>
         public void CopySelectedFileNames()
         {
             CopySelectedItemText(0);
         }
 
+        /// <summary>
+        /// Copies the file paths of the selected listview items
+        /// </summary>
         public void CopySelectedPaths()
         {
             CopySelectedItemText(2);
         }
 
+        /// <summary>
+        /// Copies the dimensions of the selected listview items, if they're images
+        /// </summary>
+        /// <param name="formatDims">The format of the widthxheight as a interpolated string -> "{0}x{1}"</param>
         public void CopyDimensionsSelectedFiles(string formatDims)
         {
             Size dims;
@@ -416,6 +494,9 @@ namespace ImViewLite
             ClipboardHelper.CopyText(paths.ToString());
         }
 
+        /// <summary>
+        /// Copies the selected files / folders to the clipboard
+        /// </summary>
         public void CopySelectedFiles()
         {
             if (listView1.SelectedIndices.Count < 2)
@@ -438,6 +519,9 @@ namespace ImViewLite
             ClipboardHelper.CopyFile(files);
         }
 
+        /// <summary>
+        /// Deletes the selected listview items
+        /// </summary>
         public void DeleteSelectedItems()
         {
             if (listView1.SelectedIndices.Count > 1)
@@ -465,7 +549,7 @@ namespace ImViewLite
                     InternalSettings.Ask_Delete_Confirmation_Single = false;
                     foreach (string i in del)
                     {
-                        DeleteFile(i);
+                        DeletePath(i);
                     }
                     InternalSettings.Ask_Delete_Confirmation_Single = tmp;
                 });
@@ -474,10 +558,13 @@ namespace ImViewLite
 
             if (listView1.FocusedItem != null)
             {
-                DeleteFile(listView1.FocusedItem.SubItems[2].Text);
+                DeletePath(listView1.FocusedItem.SubItems[2].Text);
             }
         }
 
+        /// <summary>
+        /// Renames the selected listview items
+        /// </summary>
         public void RenameSelectedItems()
         {
             if (listView1.SelectedIndices.Count > 1)
@@ -517,6 +604,9 @@ namespace ImViewLite
             }
         }
 
+        /// <summary>
+        /// Opens the selected listview items
+        /// </summary>
         public void OpenSelectedItems()
         {
             if (listView1.SelectedIndices.Count > 1)
@@ -565,6 +655,9 @@ namespace ImViewLite
             }
         }
 
+        /// <summary>
+        /// Opens explorer with the selected items highlighted
+        /// </summary>
         public void OpenExplorerAtSelectedItems()
         {
             if (listView1.SelectedIndices.Count > 1)
@@ -604,6 +697,10 @@ namespace ImViewLite
             }
         }
 
+        /// <summary>
+        /// Moves the selected items to the given path
+        /// </summary>
+        /// <param name="path"></param>
         public void MoveSelectedFiles(string path = null)
         {
             if (string.IsNullOrEmpty(path))
@@ -639,6 +736,55 @@ namespace ImViewLite
             }
         }
 
+        /// <summary>
+        /// Loads the given image in the display box
+        /// </summary>
+        /// <param name="path">The path to the image.</param>
+        public void LoadImage(string path)
+        {
+            if (!PathHelper.IsValidFilePath(path))
+                return;
+
+            FileInfo finfo = new FileInfo(path);
+
+            if (!finfo.Exists)
+            {
+                imageDisplay1.Image = null;
+                return;
+            }
+
+            tsslFileSize.Text = Helper.SizeSuffix(finfo.Length);
+            tsslFilePath.Text = finfo.Name;
+
+            if (imageDisplay1.TryLoadImage(path))
+            {
+                tsslImageSize.Text = $"{imageDisplay1.Image.Width} x {imageDisplay1.Image.Height}";
+            }
+            else if (InternalSettings.Agressive_Image_Unloading)
+            {
+                imageDisplay1.Image = null;
+                tsslImageSize.Text = "0 x 0";
+            }
+        }
+
+        /// <summary>
+        /// Starts the LoadImageTimer and sets the given path to the next image
+        /// </summary>
+        /// <param name="path">The image that will be loaded on tick</param>
+        public void DelayLoadImage(string path)
+        {
+            //this.InvokeSafe(() => { 
+            _LoadImageTimer.Stop();
+            _LoadImageTimer.Start();
+            _Image_Delay = path;
+            //});
+        }
+
+        /// <summary>
+        /// Executes a commad with arg as the first argument.
+        /// </summary>
+        /// <param name="cmd">The command to run.</param>
+        /// <param name="arg">The first and only argument.</param>
         public void ExecuteCommand(Command cmd, string arg)
         {
             ExecuteCommand(cmd, new string[] { arg });
@@ -701,45 +847,7 @@ namespace ImViewLite
                 }
         }
 
-        public void LoadImage(string path)
-        {
-            if (!PathHelper.IsValidFilePath(path))
-                return;
-
-            FileInfo finfo = new FileInfo(path);
-
-            if (!finfo.Exists)
-            {
-                imageDisplay1.Image = null;
-                return;
-            }
-
-            tsslFileSize.Text = Helper.SizeSuffix(finfo.Length);
-            tsslFilePath.Text = finfo.Name;
-
-            if (imageDisplay1.TryLoadImage(path))
-            {
-                tsslImageSize.Text = $"{imageDisplay1.Image.Width} x {imageDisplay1.Image.Height}";
-            }
-            else if (InternalSettings.Agressive_Image_Unloading)
-            {
-                imageDisplay1.Image = null;
-                tsslImageSize.Text = "0 x 0";
-            }
-        }
-
-        // This variable is basically to pass args to the LoadImageTimer_Tick function
-        // The purpose of the timer function is to prevent lag due to trying to load 50 images very quickly
-        // So the timer puts a delay of 50ms before an image will be loaded, and in that time if another image is loaded
-        // It will load that instead
-        private string _Image_Delay = "";
-        private void DelayLoadImage(string path)
-        {
-            // start the timer and set the queue
-            _LoadImageTimer.Stop();
-            _LoadImageTimer.Start();
-            _Image_Delay = path;
-        }
+       
 
         private void LoadImageTimer_Tick(object sender, EventArgs e)
         {
@@ -812,9 +920,9 @@ namespace ImViewLite
                 }
                 _FolderWatcher.WaitThreadsFinished();
 
-                int index = e.ItemIndex - _FolderWatcher.DirectoryCache.Count;
+                // int index = e.ItemIndex - _FolderWatcher.DirectoryCache.Count;
 
-                FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
+                FileInfo finfo = new FileInfo(_FolderWatcher[e.ItemIndex]);
                 ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
                 if (finfo.Exists)
                 {
@@ -982,10 +1090,7 @@ namespace ImViewLite
         }
 
 
-        private void openToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
+        
 
         private void ListView1_RightClicked()
         {
@@ -1028,10 +1133,7 @@ namespace ImViewLite
             }
         }
 
-        private void tsbSettings_Click(object sender, EventArgs e)
-        {
-            OpenSettings();
-        }
+        
 
         private void _FolderWatcher_DirectoryAdded(string name)
         {
@@ -1083,6 +1185,29 @@ namespace ImViewLite
             {
                 this.RefreshListView();
             }));
+        }
+
+        private void _FolderWatcher_ItemChanged(string name)
+        {
+            this.InvokeSafe((Action)(() =>
+            {
+                this.RefreshListView();
+            }));
+        }
+
+        private void openToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string dir = PathHelper.SelectFolderDialog(InternalSettings.Folder_Select_Dialog_Title, _CurrentDirectory);
+
+            if (string.IsNullOrEmpty(dir))
+                return;
+
+            UpdateDirectory(dir, true);
+        }
+
+        private void tsbSettings_Click(object sender, EventArgs e)
+        {
+            OpenSettings();
         }
 
         private void UpArrowButton_Click(object sender, EventArgs e)

@@ -30,6 +30,9 @@ namespace ImViewLite.Misc
         public delegate void DirectoryRenamedEvent(string newName, string oldName);
         public event DirectoryRenamedEvent DirectoryRenamed;
 
+        public delegate void ItemChangedEvent(string name);
+        public event ItemChangedEvent ItemChanged;
+
         public bool AboveDrives { get { return _AboveDrives; } }
         private bool _AboveDrives = false;
 
@@ -41,15 +44,29 @@ namespace ImViewLite.Misc
             }
         }
 
+        public string this[int index]
+        {
+            get
+            {
+                int c = DirectoryCache.Count;
+                if (index < c)
+                    return DirectoryCache[index];
+                return FileCache[index - c];
+            }
+            set
+            {
+                int c = DirectoryCache.Count;
+                if (index < c)
+                    DirectoryCache[index] = value;
+                FileCache[index - c] = value;
+            }
+        }
+
 
         public List<string> DirectoryCache;        // list of sorted directories for the current directory
         public List<string> FileCache;             // list of sorted files for the current directory
 
         private WorkerQueue _ProcessFileSystemChange = new WorkerQueue();
-        //private WorkerQueue _ItemRenamed = new WorkerQueue();
-        //private WorkerQueue _ItemDeleted = new WorkerQueue();
-        //private WorkerQueue _FileCreated = new WorkerQueue();
-        //private WorkerQueue _DirectoryCreated = new WorkerQueue();
 
         private List<FileSystemWatcher> watchers = new List<FileSystemWatcher>();
         private string directory;
@@ -59,10 +76,6 @@ namespace ImViewLite.Misc
         public FolderWatcher()
         {
             _ProcessFileSystemChange.ProcessFile += Process;
-            //_ItemRenamed.ProcessFile += Process_ItemRenamed;
-            //_ItemDeleted.ProcessFile += Process_ItemDeleted;
-            //_FileCreated.ProcessFile += Process_FileCreated;
-            //_DirectoryCreated.ProcessFile += Process_DirectoryCreated;
 
             directory = "";
             CreateWatchers(Directory.GetCurrentDirectory(), false);
@@ -75,10 +88,6 @@ namespace ImViewLite.Misc
         public FolderWatcher(string path)
         {
             _ProcessFileSystemChange.ProcessFile += Process;
-            //_ItemRenamed.ProcessFile += Process_ItemRenamed;
-            //_ItemDeleted.ProcessFile += Process_ItemDeleted;
-            //_FileCreated.ProcessFile += Process_FileCreated;
-            //_DirectoryCreated.ProcessFile += Process_DirectoryCreated;
 
             directory = path;
 
@@ -103,12 +112,17 @@ namespace ImViewLite.Misc
         {
             return DirectoryCache[index];
         }
+
         private void Process(object item)
         {
             FileSystemEventArgs e = item as FileSystemEventArgs;
 
             switch (e.ChangeType)
             {
+                case WatcherChangeTypes.Changed:
+                    OnItemChanged(e.Name);
+                    break;
+
                 case WatcherChangeTypes.Created:
                     if (File.Exists(e.FullPath))
                     {
@@ -235,29 +249,22 @@ namespace ImViewLite.Misc
 
         private void ItemRenamed(object sender, RenamedEventArgs e)
         {
-            _ProcessFileSystemChange.EnqueueFileName(e);
-            //_ItemRenamed.EnqueueFileName(e);
+            _ProcessFileSystemChange.EnqueueItem(e);
         }
 
         private void ItemCreated(object sender, FileSystemEventArgs e)
         {
-            _ProcessFileSystemChange.EnqueueFileName(e);
-            /*Console.WriteLine(e.FullPath);
-            if (File.Exists(e.FullPath))
-            {
-                _FileCreated.EnqueueFileName(e.Name);
-            }
-            else if (Directory.Exists(e.FullPath))
-            {
-                _DirectoryCreated.EnqueueFileName(e.Name);
-            }*/
+            _ProcessFileSystemChange.EnqueueItem(e);
         }
 
+        private void FileItemChanged(object sender, FileSystemEventArgs e)
+        {
+            _ProcessFileSystemChange.EnqueueItem(e);
+        }
 
         private void ItemDeleted(object sender, FileSystemEventArgs e)
         {
-            _ProcessFileSystemChange.EnqueueFileName(e);
-            //_ItemDeleted.EnqueueFileName(e.Name);
+            _ProcessFileSystemChange.EnqueueItem(e);
         }
 
         private void SetFiles(string path)
@@ -290,7 +297,8 @@ namespace ImViewLite.Misc
 
             w.Path = path;
             w.IncludeSubdirectories = false;
-            w.NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName;
+            w.NotifyFilter = NotifyFilters.FileName | NotifyFilters.DirectoryName | NotifyFilters.LastWrite;
+            w.Changed += FileItemChanged;
             w.Created += ItemCreated;
             w.Renamed += ItemRenamed;
             w.Deleted += ItemDeleted;
@@ -390,6 +398,12 @@ namespace ImViewLite.Misc
         {
             if (DirectoryRenamed != null)
                 DirectoryRenamed.Invoke(newName, oldName);
+        }
+
+        private void OnItemChanged(string name)
+        {
+            if (ItemChanged != null)
+                ItemChanged.Invoke(name);
         }
 
         public void Dispose()

@@ -28,10 +28,10 @@ namespace ImViewLite.Misc
         public void KillWorker()
         {
             _Working = false;
-            EnqueueFileName(null);
+            EnqueueItem(null);
         }
 
-        public void EnqueueFileName(object FileName)
+        public void EnqueueItem(object FileName)
         {
             lock (_Locker)
             {
