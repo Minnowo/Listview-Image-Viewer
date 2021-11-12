@@ -1,6 +1,6 @@
 ﻿using System.Diagnostics;
 using System.IO;
-
+using System.Threading.Tasks;
 
 namespace ImViewLite.Helpers
 {
@@ -154,7 +154,26 @@ namespace ImViewLite.Helpers
             return false;
         }
 
+        public static async Task<string> SelectFolderDialogAsync(string title, string initialDirectory = "")
+        {
+            return await Task.Run(() => {
+                using (FolderSelectDialog fsd = new FolderSelectDialog())
+                {
+                    fsd.Title = title;
 
+                    if (!string.IsNullOrEmpty(initialDirectory))
+                    {
+                        fsd.InitialDirectory = initialDirectory;
+                    }
+
+                    if (fsd.ShowDialog())
+                    {
+                        return fsd.FileName;
+                    }
+                }
+                return string.Empty;
+            });
+        }
 
         public static string SelectFolderDialog(string title, string initialDirectory = "")
         {

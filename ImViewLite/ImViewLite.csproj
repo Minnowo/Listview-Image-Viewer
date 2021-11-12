@@ -187,6 +187,7 @@
     <Compile Include="Types\TIMER.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Types\WorkerQueue.cs" />
     <EmbeddedResource Include="Controls\HotkeyControl.resx" />
     <EmbeddedResource Include="Controls\KeyRebind.resx" />
     <EmbeddedResource Include="Controls\RenameFileForm.resx">

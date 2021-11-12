@@ -47,7 +47,7 @@ namespace ImViewLite
         private Regex _MatchFilePath = new Regex("\"(?<path>[^\"]*)\"", RegexOptions.Compiled | RegexOptions.IgnoreCase);
         private bool _IsUsingTextbox = false;
         private bool _PreventOverflow = false;
-        private object _CacheLock = new object();
+        //private object _CacheLock = new object();
 
         public MainForm()
         {
@@ -99,11 +99,11 @@ namespace ImViewLite
 
         public void RefreshListView()
         {
-            lock (_CacheLock)
-            {
+            //lock (_CacheLock)
+            //{
                 this._ListViewItemCache = new ListViewItemEx[] { };
                 this.listView1.Invalidate();
-            }
+            //}
 
             if (InternalSettings.Agressive_Image_Unloading)
                 DelayLoadImage(this.listView1.GetSelectedItemText2());
@@ -559,6 +559,8 @@ namespace ImViewLite
             {
                 try
                 {
+                    // need to fix this, it doesn't fire DirectoryCreated Event in the file sytstem watcher
+                    // when used to create a directory
                     path = PathHelper.SelectFolderDialog(InternalSettings.Folder_Select_Dialog_Title, Path.GetDirectoryName(CurrentDirectory));
                 }
                 catch
@@ -749,7 +751,6 @@ namespace ImViewLite
                     _FolderWatcher.WaitThreadsFinished(false);
                     DirectoryInfo dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[e.ItemIndex]);
                     ListViewItemEx ditem = new ListViewItemEx(dinfo.Name);
-                    //ditem.SelectionChanged += ListViewItem_Click;
                     ditem.SubItems.Add("");
                     ditem.SubItems.Add(dinfo.FullName);
 
@@ -762,7 +763,6 @@ namespace ImViewLite
 
                 FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
                 ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
-                //fitem.SelectionChanged += ListViewItem_Click;
                 if (finfo.Exists)
                 {
                     fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
@@ -807,12 +807,23 @@ namespace ImViewLite
                 _FolderWatcher.WaitThreadsFinished(false);
                 for (int index = start; index <= end; index++)
                 {
-                    DirectoryInfo dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[index]);
-                    ListViewItemEx ditem = new ListViewItemEx(dinfo.Name);
-                    
-                    ditem.SubItems.Add("");
-                    ditem.SubItems.Add(dinfo.FullName);
+                    DirectoryInfo dinfo;
+                    ListViewItemEx ditem;
 
+                    if (index < _FolderWatcher.DirectoryCache.Count)
+                    {
+                        dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[index]);
+                        ditem = new ListViewItemEx(dinfo.Name);
+
+                        ditem.SubItems.Add("");
+                        ditem.SubItems.Add(dinfo.FullName);
+                    }
+                    else
+                    {
+                        ditem = new ListViewItemEx();
+                        ditem.SubItems.Add("");
+                        ditem.SubItems.Add("");
+                    }
                     _ListViewItemCache[count] = ditem;
                     count++;
                 }
@@ -825,11 +836,23 @@ namespace ImViewLite
                 _FolderWatcher.WaitThreadsFinished(false);
                 for (int index = start; index < _FolderWatcher.DirectoryCache.Count; index++)
                 {
-                    DirectoryInfo dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[index]);
-                    ListViewItemEx ditem = new ListViewItemEx(dinfo.Name);
-                    
-                    ditem.SubItems.Add("");
-                    ditem.SubItems.Add(dinfo.FullName);
+                    DirectoryInfo dinfo;
+                    ListViewItemEx ditem;
+
+                    if (index < _FolderWatcher.DirectoryCache.Count)
+                    {
+                        dinfo = new DirectoryInfo(_FolderWatcher.DirectoryCache[index]);
+                        ditem = new ListViewItemEx(dinfo.Name);
+
+                        ditem.SubItems.Add("");
+                        ditem.SubItems.Add(dinfo.FullName);
+                    }
+                    else
+                    {
+                        ditem = new ListViewItemEx();
+                        ditem.SubItems.Add("");
+                        ditem.SubItems.Add("");
+                    }
 
                     _ListViewItemCache[count] = ditem;
                     count++;
@@ -838,9 +861,50 @@ namespace ImViewLite
                 _FolderWatcher.WaitThreadsFinished(true);
                 for (int index = 0; count < length; index++)
                 {
-                    FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
-                    ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
-                    
+                    FileInfo finfo;
+                    ListViewItemEx fitem;
+
+                    if (index < _FolderWatcher.FileCache.Count)
+                    {
+                        finfo = new FileInfo(_FolderWatcher.FileCache[index]);
+                        fitem = new ListViewItemEx(finfo.Name);
+
+                        if (finfo.Exists)
+                        {
+                            fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                        }
+                        else
+                        {
+                            fitem.SubItems.Add("DELETED");
+                        }
+                        fitem.SubItems.Add(finfo.FullName);
+                    }
+                    else
+                    {
+                        fitem = new ListViewItemEx();
+                        fitem.SubItems.Add("");
+                        fitem.SubItems.Add("");
+                    }
+
+                    _ListViewItemCache[count] = fitem;
+                    count++;
+                }
+                return;
+            }
+
+            // starts and ends in file cache
+            _FolderWatcher.WaitThreadsFinished(true);
+            for (int index = start - dirCount; count < length; index++)
+            {
+                FileInfo finfo;
+                ListViewItemEx fitem;
+
+                if (index < _FolderWatcher.FileCache.Count)
+                {
+                    finfo = new FileInfo(_FolderWatcher.FileCache[index]);
+
+                    fitem = new ListViewItemEx(finfo.Name);
+
                     if (finfo.Exists)
                     {
                         fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
@@ -849,30 +913,15 @@ namespace ImViewLite
                     {
                         fitem.SubItems.Add("DELETED");
                     }
+
                     fitem.SubItems.Add(finfo.FullName);
-
-                    _ListViewItemCache[count] = fitem;
-                    count++;
-                }
-                return;
-            }
-
-            _FolderWatcher.WaitThreadsFinished(true);
-            // starts and ends in file cache
-            for (int index = start - dirCount; count < length; index++)
-            {
-                FileInfo finfo = new FileInfo(_FolderWatcher.FileCache[index]);
-                ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
-                //fitem.SelectionChanged += ListViewItem_Click;
-                if (finfo.Exists)
-                {
-                    fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
                 }
                 else
                 {
-                    fitem.SubItems.Add("DELETED");
+                    fitem = new ListViewItemEx();
+                    fitem.SubItems.Add("");
+                    fitem.SubItems.Add("");
                 }
-                fitem.SubItems.Add(finfo.FullName);
 
                 _ListViewItemCache[count] = fitem;
                 count++;
