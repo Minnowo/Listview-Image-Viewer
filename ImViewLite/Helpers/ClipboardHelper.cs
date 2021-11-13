@@ -126,6 +126,19 @@ namespace ImViewLite.Helpers
             return CopyStringDefault(formatedColor);
         }
 
+        public static bool ContainsFileDropList()
+        {
+            try
+            {
+                return Clipboard.ContainsFileDropList();
+            }
+            catch
+            {
+            }
+
+            return false;
+        }
+
         public static bool CopyStringDefault(string str)
         {
             IDataObject dataObject = new DataObject();

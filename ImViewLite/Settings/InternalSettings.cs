@@ -67,48 +67,6 @@ namespace ImViewLite.Settings
                 WRM_File_Dialog
             });
 
-
-        #region message box 
-
-        public const string Delete_Item_Messagebox_Title = "Delete Item?";
-        public const string Delete_Item_Messagebox_Message = "Are you sure you would like to delete this item: ";
-
-        public const string Item_Does_Not_Exist_Title = "Item not found";
-        public const string Item_Does_Not_Exist_Message = "This item does not exist";
-
-        public const string Invalid_Size_Messagebox_Title = "Invalid image size";
-        public const string Invalid_Size_Messagebox_Message = "The image size is not valid";
-
-        public const string Unable_To_Invert_Image_Title = "Unable to invert colors.";
-        public const string Unable_To_Invert_Image_Message = "There was an error when trying to invert the colors of this image, most likely the pixel format is not 32bppArgb.";
-
-        public const string Unable_To_Convert_To_Grey_Image_Title = "Unable to convert to grey.";
-        public const string Unable_To_Convert_To_Grey_Image_Message = "There was an error when trying to convert to grey, most likely the pixel format is not 32bppArgb.";
-
-        public const string Unable_To_Convert_To_Fill_Transparent_Title = "Unable to fill transparent pixels.";
-        public const string Unable_To_Convert_To_Fill_Transparent_Message = "There was an error when trying to fill transparent pixels, most likely the pixel format is not 32bppArgb.";
-
-        public const string No_Animation_Frames_Found_Title = "No animation frames found.";
-        public const string No_Animation_Frames_Found_Message = "Unable to detect any animation frames to export.";
-
-        public const string Error_Loading_Settings_Title = "Unable to load settings";
-        public const string Error_Loading_Settings_Message = "There was an error trying to load the settings, the file will be deleted / overwritten when the program exits";
-
-        public const string Gif_Export_Title = "Gif export";
-
-        #endregion
-
-
-        #region rate limits
-
-        public static short Fit_To_Screen_On_Resize_Limit = 250;
-
-        public static short Dither_Threshold_Update_Limit = 1000;
-
-        public static short Folder_Watcher_Resort_Timer_Limit = 5000;
-
-        #endregion
-
         public static Regex ReDigit = new Regex(@"\d+", RegexOptions.Compiled);
 
         public static Font CloseButtonFont = new Font(new Font("Consolas", 10), FontStyle.Bold);

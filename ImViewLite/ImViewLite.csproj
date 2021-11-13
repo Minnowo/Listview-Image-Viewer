@@ -95,6 +95,12 @@
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\FunctionSelectorForm.Designer.cs" />
+    <Compile Include="Forms\OpenWithForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\OpenWithForm.Designer.cs">
+      <DependentUpon>OpenWithForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -195,6 +201,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\ArgumentSelectionForm.resx">
       <DependentUpon>ArgumentSelectionForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\OpenWithForm.resx">
+      <DependentUpon>OpenWithForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\SettingsForm.resx" />
     <EmbeddedResource Include="Helpers\Color\Picker\ColorDisplay.resx" />

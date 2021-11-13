@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
+using ImViewLite.Settings;
 
 namespace ImViewLite.Helpers
 {
@@ -50,6 +51,41 @@ namespace ImViewLite.Helpers
             return false;
         }
 
+        public static bool CopyDirectory(string from, string to)
+        {
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+                return false;
+
+            try
+            {
+                int len = from.Length;
+
+                if (!to.EndsWith("\\"))
+                    to += "\\";
+
+                if (!from.EndsWith("\\"))
+                    len += 1;
+
+                CreateDirectory(to);
+                foreach (string dirPath in Directory.GetDirectories(from, "*", SearchOption.AllDirectories))
+                {
+                    string newDir = to + dirPath.Substring(len);
+                    Directory.CreateDirectory(newDir);
+                }
+
+                foreach (string filePath in Directory.GetFiles(from, "*.*", SearchOption.AllDirectories))
+                {
+                    string newPath = to + filePath.Substring(len);
+                    File.Copy(filePath, newPath, true);
+                }
+                return true;
+            }
+            catch
+            {
+            }
+            return false;
+        }
+
         public static bool CopyFile(string from, string to)
         {
             if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
@@ -57,6 +93,22 @@ namespace ImViewLite.Helpers
             try
             {
                 File.Copy(from, to);
+                return true;
+            }
+            catch
+            {
+            }
+            return false;
+        }
+
+        public static bool MoveDirectory(string from, string to)
+        {
+            if (string.IsNullOrEmpty(from) || string.IsNullOrEmpty(to))
+                return false;
+
+            try
+            {
+                Directory.Move(from, to);
                 return true;
             }
             catch
@@ -98,6 +150,20 @@ namespace ImViewLite.Helpers
             }
         }
 
+        public static bool IsValidDirectoryPath(string path, out DirectoryInfo info)
+        {
+            try
+            {
+                info = new DirectoryInfo(path);
+                return true;
+            }
+            catch
+            {
+                info = null;
+                return false;
+            }
+        }
+
         /// <summary>
         /// Tries to create a <see cref="FileInfo"/> for the given path.
         /// </summary>
@@ -112,6 +178,20 @@ namespace ImViewLite.Helpers
             }
             catch
             {
+                return false;
+            }
+        }
+
+        public static bool IsValidFilePath(string path, out FileInfo info)
+        {
+            try
+            {
+                info = new FileInfo(path);
+                return true;
+            }
+            catch
+            {
+                info = null;
                 return false;
             }
         }
@@ -175,7 +255,7 @@ namespace ImViewLite.Helpers
             });
         }
 
-        public static string SelectFolderDialog(string title, string initialDirectory = "")
+        public static string SelectFolderDialog(string initialDirectory = "", string title=InternalSettings.Folder_Select_Dialog_Title)
         {
             using (FolderSelectDialog fsd = new FolderSelectDialog())
             {

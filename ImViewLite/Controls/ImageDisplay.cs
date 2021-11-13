@@ -112,7 +112,7 @@ namespace ImViewLite.Controls
         }
         private DrawMode _DrawMode = DrawMode.FitImage;
 
-        public string ImagePath;
+        public FileInfo ImagePath;
 
         public bool Display = true;
         public bool IsAnimating = false;
@@ -258,7 +258,7 @@ namespace ImViewLite.Controls
             if (this._Image != null)
                 _Image.Dispose();
 
-            this.ImagePath = path;
+            this.ImagePath = new FileInfo(path);
             this.Image = i;
             Invalidate();
             return true;

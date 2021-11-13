@@ -45,11 +45,6 @@ namespace ImViewLite
         private string _CurrentDirectory = "";
 
         /// <summary>
-        /// Used to store the file path of the image that is going to be loaded once the LoadImageTimer_Tick event is called
-        /// </summary>
-        private string _Image_Delay = "";
-
-        /// <summary>
         /// Keeps track of the first index of the first item in the item cache
         /// </summary>
         private int _CahceItem1;                     
@@ -139,8 +134,11 @@ namespace ImViewLite
             listView1.RightClicked += ListView1_RightClicked;
 
             this.KeyUp += MainForm_KeyUp;
+            _LoadImageTimer.SetInterval(InternalSettings.Image_Delay_Load_Time);
             _LoadImageTimer.Tick += LoadImageTimer_Tick;
 
+            this.textBox1.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            this.textBox1.AutoCompleteSource = AutoCompleteSource.FileSystemDirectories;
             this.textBox1.Text = "";
             this.TopMost = InternalSettings.Always_On_Top;
             this.KeyPreview = true;
@@ -151,7 +149,7 @@ namespace ImViewLite
             LoadDirectory("");
         }
 
-        
+
 
 
         /// <summary>
@@ -221,6 +219,7 @@ namespace ImViewLite
             this.listView1.FullRowSelect = InternalSettings.Full_Row_Select;
             this.imageDisplay1.InterpolationMode = InternalSettings.Default_Interpolation_Mode;
             this.imageDisplay1.DrawMode = InternalSettings.Default_Draw_Mode;
+            this._LoadImageTimer.SetInterval(InternalSettings.Image_Delay_Load_Time);
         }
 
         /// <summary>
@@ -317,10 +316,6 @@ namespace ImViewLite
             if (info.Parent != null)
             {
                 this.UpdateDirectory(info.Parent.FullName, true);
-                if (InternalSettings.Agressive_Image_Unloading)
-                {
-                    this.ReloadCurrentImage();
-                }
             }
             else
             {
@@ -386,10 +381,18 @@ namespace ImViewLite
         public void ReloadCurrentImage()
         {
             string newPath = listView1.GetSelectedItemText2();
-            if (newPath != imageDisplay1.ImagePath)
+
+            FileInfo path;
+            if (PathHelper.IsValidFilePath(newPath, out path))
             {
-                LoadImage(newPath);
+                if (imageDisplay1.ImagePath == null || 
+                    path.FullName != imageDisplay1.ImagePath.FullName || 
+                    path.Length != imageDisplay1.ImagePath.Length)
+                {
+                    LoadImage(newPath);
+                }
             }
+            
         }
 
         /// <summary>
@@ -545,13 +548,10 @@ namespace ImViewLite
 
                 Task.Run(() =>
                 {
-                    bool tmp = InternalSettings.Ask_Delete_Confirmation_Single;
-                    InternalSettings.Ask_Delete_Confirmation_Single = false;
                     foreach (string i in del)
                     {
-                        DeletePath(i);
+                        PathHelper.DeleteFileOrPath(i);
                     }
-                    InternalSettings.Ask_Delete_Confirmation_Single = tmp;
                 });
                 return;
             }
@@ -709,11 +709,11 @@ namespace ImViewLite
                 {
                     // need to fix this, it doesn't fire DirectoryCreated Event in the file sytstem watcher
                     // when used to create a directory
-                    path = PathHelper.SelectFolderDialog(InternalSettings.Folder_Select_Dialog_Title, Path.GetDirectoryName(CurrentDirectory));
+                    path = PathHelper.SelectFolderDialog(Path.GetDirectoryName(CurrentDirectory));
                 }
                 catch
                 {
-                    path = PathHelper.SelectFolderDialog(InternalSettings.Folder_Select_Dialog_Title);
+                    path = PathHelper.SelectFolderDialog();
                 }
             }
 
@@ -744,7 +744,7 @@ namespace ImViewLite
         {
             if (!PathHelper.IsValidFilePath(path))
                 return;
-
+            
             FileInfo finfo = new FileInfo(path);
 
             if (!finfo.Exists)
@@ -776,7 +776,6 @@ namespace ImViewLite
             //this.InvokeSafe(() => { 
             _LoadImageTimer.Stop();
             _LoadImageTimer.Start();
-            _Image_Delay = path;
             //});
         }
 
@@ -847,13 +846,11 @@ namespace ImViewLite
                 }
         }
 
-       
-
         private void LoadImageTimer_Tick(object sender, EventArgs e)
         {
             // time has passed, stop timer and load the image
             _LoadImageTimer.Stop();
-            LoadImage(_Image_Delay);
+            ReloadCurrentImage();
         }
 
         private void UpdateAfterIndexChanged()
@@ -920,19 +917,31 @@ namespace ImViewLite
                 }
                 _FolderWatcher.WaitThreadsFinished();
 
-                // int index = e.ItemIndex - _FolderWatcher.DirectoryCache.Count;
+                int index = e.ItemIndex - _FolderWatcher.DirectoryCache.Count;
+                
+                FileInfo finfo;
+                ListViewItemEx fitem;
 
-                FileInfo finfo = new FileInfo(_FolderWatcher[e.ItemIndex]);
-                ListViewItemEx fitem = new ListViewItemEx(finfo.Name);
-                if (finfo.Exists)
+                if (index < _FolderWatcher.FileCache.Count)
                 {
-                    fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                    finfo = new FileInfo(_FolderWatcher.FileCache[index]);
+                    fitem = new ListViewItemEx(finfo.Name);
+                    if (finfo.Exists)
+                    {
+                        fitem.SubItems.Add(Helper.SizeSuffix(finfo.Length, 2));
+                    }
+                    else
+                    {
+                        fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
+                    }
+                    fitem.SubItems.Add(finfo.FullName);
                 }
                 else
                 {
-                    fitem.SubItems.Add(Helper.SizeSuffix(0, 2));
+                    fitem = new ListViewItemEx();
+                    fitem.SubItems.Add("");
+                    fitem.SubItems.Add("");
                 }
-                fitem.SubItems.Add(finfo.FullName);
 
                 e.Item = fitem;
             }
@@ -1197,7 +1206,7 @@ namespace ImViewLite
 
         private void openToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            string dir = PathHelper.SelectFolderDialog(InternalSettings.Folder_Select_Dialog_Title, _CurrentDirectory);
+            string dir = PathHelper.SelectFolderDialog(_CurrentDirectory);
 
             if (string.IsNullOrEmpty(dir))
                 return;
@@ -1362,6 +1371,78 @@ namespace ImViewLite
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
             ExecuteCommand(Command.OpenColorPicker);
+        }
+
+        private void pasteToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            PasteFiles(false);
+        }
+
+        public void PasteFiles(bool Move)
+        {
+            if (!ClipboardHelper.ContainsFileDropList())
+                return;
+
+            System.Collections.Specialized.StringCollection files = Clipboard.GetFileDropList();
+
+            string pasteTarget = _CurrentDirectory;
+
+            if (listView1.FocusedItem != null)
+            {
+                if (Directory.Exists(listView1.FocusedItem.SubItems[2].Text))
+                {
+                    pasteTarget = listView1.FocusedItem.SubItems[2].Text;
+                }
+            }
+
+            foreach (string path in files)
+            {
+                string newPath = Path.Combine(pasteTarget, Path.GetFileName(path));
+                //Console.WriteLine(path);
+                if (Move)
+                {
+                    if (Directory.Exists(path))
+                    {
+                        PathHelper.MoveDirectory(path, newPath);
+                    }
+                    if (File.Exists(path))
+                    {
+                        PathHelper.MoveFile(path, newPath);
+                    }
+                }
+                else
+                {
+                    if (Directory.Exists(path))
+                    {
+                        //Console.WriteLine("DIR");
+                        PathHelper.CopyDirectory(path, newPath);
+                    }
+                    if (File.Exists(path))
+                    {
+                        PathHelper.CopyFile(path, newPath);
+                    }
+                }
+            }
+        }
+
+        private void openWithToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (listView1.FocusedItem == null)
+                return;
+
+            using (OpenWithForm f = new OpenWithForm(listView1.FocusedItem.SubItems[2].Text))
+            {
+                f.ShowDialog();
+            }
+        }
+
+
+        private void textBox1_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
+        {   
+            if (e.KeyCode == Keys.Tab)
+            {
+                e.IsInputKey = true;
+            }
         }
     }
 }

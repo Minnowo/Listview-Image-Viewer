@@ -21,6 +21,13 @@ namespace ImViewLite.Misc
             set { _Enabled = value; }
         }
 
+        public void SetInterval(int i)
+        {
+            base.Enabled = false;
+            base.Interval = i;
+            base.Enabled = true;
+        }
+
         protected override void OnTick(System.EventArgs e)
         { if (this.Enabled) base.OnTick(e); }
     }
