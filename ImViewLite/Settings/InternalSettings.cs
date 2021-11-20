@@ -75,6 +75,12 @@ namespace ImViewLite.Settings
 
         public static Size TSMI_Generated_Icon_Size = new Size(16, 16);
 
+        public static List<string> Favorite_Directories
+        {
+            get { return CurrentUserSettings.FavoriteDirectories; }
+            set { CurrentUserSettings.FavoriteDirectories = value; }
+        }
+
         public static int Grid_Cell_Size
         {
             get { return CurrentUserSettings.Grid_Cell_Size; }
@@ -324,6 +330,9 @@ namespace ImViewLite.Settings
                 Binds.Add(bk.Keys, bk);
             }
         }
+
+        [Browsable(false)]
+        public List<string> FavoriteDirectories { get; set; } = new List<string>();
 
         [Browsable(false)]
         public List<HotkeyEx> _Binds { get; set; } = new List<HotkeyEx>();//InternalSettings.Default_Key_Binds.ToList();

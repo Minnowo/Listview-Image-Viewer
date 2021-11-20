@@ -147,6 +147,7 @@ namespace ImViewLite
             // empty string to just list all drives 
             _CurrentDirectory = "";
             LoadDirectory("");
+            LoadFavoriteDirectories();
         }
 
 
@@ -779,6 +780,16 @@ namespace ImViewLite
             //});
         }
 
+        public void OpenFavoriteDirectory(int index)
+        {
+            index += 1;
+
+            if (index >= this.toolStripDropDownButton3.DropDownItems.Count)
+                return;
+            
+            this.CurrentDirectory = ((DirectoryInfo)this.toolStripDropDownButton3.DropDownItems[index].Tag).FullName;
+        }
+
         /// <summary>
         /// Executes a commad with arg as the first argument.
         /// </summary>
@@ -829,9 +840,47 @@ namespace ImViewLite
                 case Command.OpenExplorerAtLocation: OpenExplorerAtSelectedItems(); break;
                 case Command.LastDirectory: PreviousDirectory(); break;
                 case Command.UndoLastDirectory: UndoPreviousDirectory(); break;
+                
+                case Command.OpenFavoriteDirectory:
+
+                    Console.WriteLine(path);
+                    if(int.TryParse(path, out int index))
+                        OpenFavoriteDirectory(index);
+                    
+                    break;
             }
         }
 
+        private void LoadFavoriteDirectories()
+        {
+            for(int i = 2; i < this.toolStripDropDownButton3.DropDownItems.Count; i++)
+            {
+                this.toolStripDropDownButton3.DropDownItems.RemoveAt(i);
+            }
+
+            int c = 0;
+            foreach(string i in InternalSettings.Favorite_Directories)
+            {
+                c++;
+                if (PathHelper.IsValidDirectoryPath(i, out DirectoryInfo info))
+                {
+                    ToolStripMenuItem btn = new ToolStripMenuItem(i, null, FavoriteItemClicked, $"favItem{c}");
+                    btn.ShortcutKeyDisplayString = c.ToString();
+                    btn.Tag = info;
+                    this.toolStripDropDownButton3.DropDownItems.Add(btn);
+                }
+            }
+        }
+
+        private void FavoriteItemClicked(object sender, EventArgs e)
+        {
+            ToolStripMenuItem btn = sender as ToolStripMenuItem;
+
+            if (btn == null)
+                return;
+
+            this.CurrentDirectory = ((DirectoryInfo)btn.Tag).FullName;
+        }
 
         private void MainForm_KeyUp(object sender, KeyEventArgs e)
         {
@@ -1443,6 +1492,13 @@ namespace ImViewLite
             {
                 e.IsInputKey = true;
             }
+        }
+
+        private void addCurrentFolderToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            string directory = this._CurrentDirectory;
+            InternalSettings.Favorite_Directories.Add(directory);
+            this.LoadFavoriteDirectories();
         }
     }
 }

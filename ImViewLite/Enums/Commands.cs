@@ -27,6 +27,7 @@ namespace ImViewLite.Enums
         OpenWithDefaultProgram,
         OpenExplorerAtLocation,
         LastDirectory,
-        UndoLastDirectory
+        UndoLastDirectory,
+        OpenFavoriteDirectory,
     }
 }

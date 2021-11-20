@@ -99,6 +99,7 @@ namespace ImViewLite.Forms
             {
                 case Command.MoveImage:
                 case Command.OpenSelectedDirectory:
+                case Command.OpenFavoriteDirectory:
                     return 1;
                 case Command.Nothing:
                 case Command.CopyImage:
