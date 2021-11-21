@@ -20,6 +20,7 @@ namespace ImViewLite
 {
     public partial class MainForm : Form
     {
+
         /// <summary>
         /// The current worker directory / displayed directory
         /// </summary>
@@ -36,7 +37,8 @@ namespace ImViewLite
                     _FolderUndoHistory.Push(this._CurrentDirectory);
                     _FolderRedoHistory.Clear();
                 }
-
+                
+                this.DirectorySelectedIndexCache[_CurrentDirectory] = listView1.NewestSelectedIndex;
                 this.Text = value;
                 this._CurrentDirectory = value;
                 this.LoadDirectory(value);
@@ -68,6 +70,11 @@ namespace ImViewLite
         /// The previously visited directories after they've been undone
         /// </summary>
         private Stack<string> _FolderRedoHistory = new Stack<string>();
+        
+        /// <summary>
+        /// Holds the last selected index before changing a directory.
+        /// </summary>
+        private Dictionary<string, int> DirectorySelectedIndexCache = new Dictionary<string, int>();
 
         /// <summary>
         /// Timer to load the image 
@@ -189,6 +196,7 @@ namespace ImViewLite
             this._Undo = true;
             this._FolderUndoHistory.Push(this._CurrentDirectory);
             this.LoadDirectory(this._FolderRedoHistory.Pop());
+            this.LastDirectoryIndex();
             this._Undo = false;
             UpdateTextbox();
         }
@@ -204,6 +212,7 @@ namespace ImViewLite
             this._Undo = true;
             this._FolderRedoHistory.Push(this._CurrentDirectory);
             this.LoadDirectory(this._FolderUndoHistory.Pop());
+            this.LastDirectoryIndex();
             this._Undo = false;
             UpdateTextbox();
         }
@@ -305,6 +314,18 @@ namespace ImViewLite
             }
         }
 
+        public void LastDirectoryIndex()
+        {
+            if (this.DirectorySelectedIndexCache.ContainsKey(_CurrentDirectory))
+            {
+                this.listView1.DeselectAll();
+                this.listView1.SelectedIndices.Add(this.DirectorySelectedIndexCache[_CurrentDirectory]);
+                this.listView1.OldestSelectedIndex = this.DirectorySelectedIndexCache[_CurrentDirectory];
+                this.listView1.NewestSelectedIndex = this.DirectorySelectedIndexCache[_CurrentDirectory];
+                this.listView1.Invalidate();
+            }
+        }
+
         /// <summary>
         /// Moves the current directory to its parent.
         /// </summary>
@@ -317,6 +338,7 @@ namespace ImViewLite
             if (info.Parent != null)
             {
                 this.UpdateDirectory(info.Parent.FullName, true);
+                this.LastDirectoryIndex();
             }
             else
             {
@@ -546,6 +568,7 @@ namespace ImViewLite
                     del[c] = listView1.Items[i].SubItems[2].Text;
                     c++;
                 }
+                this.listView1.DeselectAll();
 
                 Task.Run(() =>
                 {

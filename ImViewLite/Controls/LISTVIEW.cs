@@ -28,6 +28,11 @@ namespace ImViewLite.Controls
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.EnableNotifyMessage, true);
         }
         
+        public void DeselectAll()
+        {
+            this.SelectedIndices.Clear();
+        }
+
         public string GetSelectedItemText2()
         {
             if (NewestSelectedIndex == -1)
