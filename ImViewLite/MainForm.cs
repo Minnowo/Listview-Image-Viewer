@@ -319,9 +319,12 @@ namespace ImViewLite
             if (this.DirectorySelectedIndexCache.ContainsKey(_CurrentDirectory))
             {
                 this.listView1.DeselectAll();
-                this.listView1.SelectedIndices.Add(this.DirectorySelectedIndexCache[_CurrentDirectory]);
                 this.listView1.OldestSelectedIndex = this.DirectorySelectedIndexCache[_CurrentDirectory];
                 this.listView1.NewestSelectedIndex = this.DirectorySelectedIndexCache[_CurrentDirectory];
+                this.listView1.SelectedItemsCount = 1;
+                this.listView1.SelectedIndices.Clear();
+                this.listView1.SelectedIndices.Add(this.DirectorySelectedIndexCache[_CurrentDirectory]);
+                this.listView1.Items[this.DirectorySelectedIndexCache[_CurrentDirectory]].Focused = true;
                 this.listView1.Invalidate();
             }
         }
