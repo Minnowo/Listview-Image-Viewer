@@ -384,6 +384,8 @@ namespace ImViewLite
         {
             using (SettingsForm sf = new SettingsForm())
             {
+                sf.TopMost = this.TopMost;
+                sf.Owner = this;
                 sf.StartPosition = FormStartPosition.CenterScreen;
                 sf.ShowDialog();
                 UpdateSettings();
