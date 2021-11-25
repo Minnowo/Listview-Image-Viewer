@@ -955,6 +955,14 @@ namespace ImViewLite
         {
             if (_PreventOverflow || listView1.NewestSelectedIndex == -1)
                 return;
+            if (File.Exists(listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text))
+            {
+                if (InternalSettings.Open_With_Default_Program_On_Enter)
+                {
+                    ExecuteCommand(Command.OpenWithDefaultProgram, listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text);
+                }
+                return;
+            }
             UpdateDirectory(listView1.Items[listView1.NewestSelectedIndex].SubItems[2].Text, true);
         }
 

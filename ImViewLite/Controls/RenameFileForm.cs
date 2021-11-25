@@ -19,6 +19,7 @@ namespace ImViewLite.Controls
             get { return textBox1.Text; }
         }
         public string Extension = "";
+        public bool isDirectory = false;
         public bool ForceExtension = true;
         private bool preventOverflow = false;
 
@@ -51,11 +52,14 @@ namespace ImViewLite.Controls
             using(RenameFileForm rnf = new RenameFileForm(path))
             {
                 rnf.Extension = "";
+                rnf.isDirectory = true;
 
-                if(rnf.ShowDialog() == DialogResult.OK)
+                if (rnf.ShowDialog() == DialogResult.OK)
                 {
-                    if (PathHelper.MoveFile(path, rnf.NewName))
+                    if (PathHelper.MoveDirectory(path, rnf.NewName))
+                    {
                         return rnf.NewName;
+                    }
                 }
             }
             return string.Empty;
@@ -108,7 +112,7 @@ namespace ImViewLite.Controls
             this.ForceExtension = !checkBox1.Checked;
             preventOverflow = true;
 
-            if (ForceExtension)
+            if (ForceExtension && !isDirectory)
             {
                 textBox1.Text = textBox2.Text + "." + Extension;
             }
@@ -133,7 +137,7 @@ namespace ImViewLite.Controls
                 t = t.Replace(c,"");
             }
 
-            if (ForceExtension)
+            if (ForceExtension && !isDirectory)
             {
                 textBox1.Text = t + "." + Extension;
             }

@@ -81,6 +81,12 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.FavoriteDirectories = value; }
         }
 
+        public static bool Open_With_Default_Program_On_Enter
+        {
+            get { return CurrentUserSettings.Open_With_Default_On_Enter; }
+            set { CurrentUserSettings.Open_With_Default_On_Enter = value; }
+        }
+
         public static int Grid_Cell_Size
         {
             get { return CurrentUserSettings.Grid_Cell_Size; }
@@ -353,11 +359,11 @@ namespace ImViewLite.Settings
         [Description("Should the garbage collecter be called after every image unloads."), DisplayName("Garbage Collect On Image Unload")]
         public bool Garbage_Collect_On_Image_Unload { get; set; } = false;
 
-       
+
 
         [Description("Should the garbage collecter be called after a gif is disposed."), DisplayName("Garbage Collect After Gif Dispose")]
         public bool Garbage_Collect_After_Disposing_Gif { get; set; } = true;
-        
+
         [DisplayName("Garbage Collect After Directory Change")]
         public bool Garbage_Collect_On_Directory_Changed { get; set; } = true;
 
@@ -375,7 +381,7 @@ namespace ImViewLite.Settings
         public bool Ask_Rename_Multiple_Files { get; set; } = true;
 
         [DisplayName("Confirm Open Multiple Files")]
-        public bool Ask_Open_Multiple_Files { get; set; } = true; 
+        public bool Ask_Open_Multiple_Files { get; set; } = true;
 
         [DisplayName("Confirm Open Multiple Files In Explorer")]
         public bool Ask_Open_Multiple_Files_In_Explorer { get; set; } = true;
@@ -383,6 +389,8 @@ namespace ImViewLite.Settings
         [Description("Should the mainform be a topmost window."), DisplayName("Always On Top")]
         public bool Always_On_Top { get; set; } = false;
 
+        [DisplayName("Open Files On Enter (Does not include folders)")]
+        public bool Open_With_Default_On_Enter { get; set;} = true;
 
         [Description("Enabled fullrow select in the listview"), DisplayName("Full Row Select")]
         public bool Full_Row_Select { get; set; } = false;
