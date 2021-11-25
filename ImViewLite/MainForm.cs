@@ -100,6 +100,7 @@ namespace ImViewLite
         {
             InitializeComponent();
             SuspendLayout();
+            this.tseMainToolstrip.ClickThrough = InternalSettings.Toolstrip_Click_Through;
             //this.imageDisplay1.CenterImage = false;
             this.imageDisplay1.CellScale = 1;
             this.imageDisplay1.CellSize = InternalSettings.Grid_Cell_Size;
@@ -222,6 +223,7 @@ namespace ImViewLite
         /// </summary>
         public void UpdateSettings()
         {
+            this.tseMainToolstrip.ClickThrough = InternalSettings.Toolstrip_Click_Through;
             this.TopMost = InternalSettings.Always_On_Top;
             this.imageDisplay1.CellSize = InternalSettings.Grid_Cell_Size;
             this.imageDisplay1.CellColor1 = InternalSettings.Image_Box_Back_Color;
@@ -230,6 +232,15 @@ namespace ImViewLite
             this.imageDisplay1.InterpolationMode = InternalSettings.Default_Interpolation_Mode;
             this.imageDisplay1.DrawMode = InternalSettings.Default_Draw_Mode;
             this._LoadImageTimer.SetInterval(InternalSettings.Image_Delay_Load_Time);
+            
+            if (this.TopMost)
+            {
+                this.Text = "+ " + this._CurrentDirectory;
+            }
+            else
+            {
+                this.Text = this._CurrentDirectory;
+            }
         }
 
         /// <summary>
@@ -354,8 +365,16 @@ namespace ImViewLite
         /// </summary>
         public void ToggleAlwaysOnTop()
         {
-            InternalSettings.Always_On_Top = !InternalSettings.Always_On_Top;
-            this.TopMost = InternalSettings.Always_On_Top;
+            this.TopMost = !this.TopMost;
+            InternalSettings.Always_On_Top = this.TopMost;
+            if (this.TopMost)
+            {
+                this.Text = "+ " + this._CurrentDirectory;
+            }
+            else
+            {
+                this.Text = this._CurrentDirectory;
+            }
         }
 
         /// <summary>
@@ -378,7 +397,6 @@ namespace ImViewLite
         {
             ColorPickerForm cpf = new ColorPickerForm();
             cpf.TopMost = this.TopMost;
-            cpf.Owner = this;
             cpf.StartPosition = FormStartPosition.CenterScreen;
             cpf.Show();
         }
@@ -1533,6 +1551,11 @@ namespace ImViewLite
             string directory = this._CurrentDirectory;
             InternalSettings.Favorite_Directories.Add(directory);
             this.LoadFavoriteDirectories();
+        }
+
+        private void toolStripButton1_Click(object sender, EventArgs e)
+        {
+            ToggleAlwaysOnTop();
         }
     }
 }

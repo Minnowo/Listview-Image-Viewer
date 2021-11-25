@@ -81,6 +81,12 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.FavoriteDirectories = value; }
         }
 
+        public static bool Toolstrip_Click_Through
+        {
+            get { return CurrentUserSettings.Tollstrip_Click_Through; }
+            set { CurrentUserSettings.Tollstrip_Click_Through = value; }
+        }
+
         public static bool Open_With_Default_Program_On_Enter
         {
             get { return CurrentUserSettings.Open_With_Default_On_Enter; }
@@ -395,6 +401,8 @@ namespace ImViewLite.Settings
         [Description("Enabled fullrow select in the listview"), DisplayName("Full Row Select")]
         public bool Full_Row_Select { get; set; } = false;
 
+        [DisplayName("Toolstrip Click Through")]
+        public bool Tollstrip_Click_Through { get; set; } = true;
 
 
         [Description("Should the parent window follow children that take control."), DisplayName("Agressive Image Unload")]

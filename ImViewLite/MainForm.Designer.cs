@@ -84,13 +84,14 @@ namespace ImViewLite
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
             this.toolStripDropDownButton3 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.addCurrentFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripDropDownButton4 = new System.Windows.Forms.ToolStripDropDownButton();
             this.tscbInterpolationMode = new System.Windows.Forms.ToolStripComboBox();
             this.tscbDrawMode = new System.Windows.Forms.ToolStripComboBox();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.tsbSettings = new System.Windows.Forms.ToolStripButton();
-            this.addCurrentFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
+            this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
             ((System.ComponentModel.ISupportInitialize)(this.scMainContainer)).BeginInit();
             this.scMainContainer.Panel1.SuspendLayout();
             this.scMainContainer.Panel2.SuspendLayout();
@@ -493,7 +494,8 @@ namespace ImViewLite
             this.toolStripDropDownButton2,
             this.toolStripDropDownButton3,
             this.toolStripDropDownButton4,
-            this.tsbSettings});
+            this.tsbSettings,
+            this.toolStripButton1});
             this.tseMainToolstrip.Location = new System.Drawing.Point(0, 0);
             this.tseMainToolstrip.Name = "tseMainToolstrip";
             this.tseMainToolstrip.Size = new System.Drawing.Size(800, 25);
@@ -536,6 +538,18 @@ namespace ImViewLite
             this.toolStripDropDownButton3.Size = new System.Drawing.Size(67, 22);
             this.toolStripDropDownButton3.Text = "Favorites";
             // 
+            // addCurrentFolderToolStripMenuItem
+            // 
+            this.addCurrentFolderToolStripMenuItem.Name = "addCurrentFolderToolStripMenuItem";
+            this.addCurrentFolderToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
+            this.addCurrentFolderToolStripMenuItem.Text = "Add Current Folder";
+            this.addCurrentFolderToolStripMenuItem.Click += new System.EventHandler(this.addCurrentFolderToolStripMenuItem_Click);
+            // 
+            // toolStripSeparator3
+            // 
+            this.toolStripSeparator3.Name = "toolStripSeparator3";
+            this.toolStripSeparator3.Size = new System.Drawing.Size(172, 6);
+            // 
             // toolStripDropDownButton4
             // 
             this.toolStripDropDownButton4.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
@@ -574,17 +588,15 @@ namespace ImViewLite
             this.tsbSettings.Text = "Settings";
             this.tsbSettings.Click += new System.EventHandler(this.tsbSettings_Click);
             // 
-            // addCurrentFolderToolStripMenuItem
+            // toolStripButton1
             // 
-            this.addCurrentFolderToolStripMenuItem.Name = "addCurrentFolderToolStripMenuItem";
-            this.addCurrentFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.addCurrentFolderToolStripMenuItem.Text = "Add Current Folder";
-            this.addCurrentFolderToolStripMenuItem.Click += new System.EventHandler(this.addCurrentFolderToolStripMenuItem_Click);
-            // 
-            // toolStripSeparator3
-            // 
-            this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(177, 6);
+            this.toolStripButton1.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.toolStripButton1.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripButton1.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.toolStripButton1.Name = "toolStripButton1";
+            this.toolStripButton1.Size = new System.Drawing.Size(83, 22);
+            this.toolStripButton1.Text = "AlwaysOnTop";
+            this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
             // MainForm
             // 
@@ -671,6 +683,7 @@ namespace ImViewLite
         private System.Windows.Forms.ToolStripMenuItem openWithToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem addCurrentFolderToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
+        private System.Windows.Forms.ToolStripButton toolStripButton1;
     }
 }
 
