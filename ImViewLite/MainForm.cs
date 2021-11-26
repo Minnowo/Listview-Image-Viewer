@@ -38,8 +38,16 @@ namespace ImViewLite
                     _FolderRedoHistory.Clear();
                 }
                 
+                if (this.TopMost)
+                {
+                    this.Text = "+ " + value;
+                }
+                else
+                {
+                    this.Text = value;
+                }
+
                 this.DirectorySelectedIndexCache[_CurrentDirectory] = listView1.NewestSelectedIndex;
-                this.Text = value;
                 this._CurrentDirectory = value;
                 this.LoadDirectory(value);
             }
@@ -195,9 +203,18 @@ namespace ImViewLite
                 return;
 
             this._Undo = true;
+            string newDir = this._FolderRedoHistory.Pop();
+            
+            if (newDir != "" && !Directory.Exists(newDir)) 
+            { 
+                UndoPreviousDirectory();
+                this._Undo = false;
+                return;
+            }
             this._FolderUndoHistory.Push(this._CurrentDirectory);
-            this.LoadDirectory(this._FolderRedoHistory.Pop());
+            this.LoadDirectory(newDir);
             this.LastDirectoryIndex();
+            
             this._Undo = false;
             UpdateTextbox();
         }
@@ -211,9 +228,19 @@ namespace ImViewLite
                 return;
             
             this._Undo = true;
+            string newDir = this._FolderUndoHistory.Pop();
+
+            if (newDir != "" && !Directory.Exists(newDir))
+            {
+                PreviousDirectory();
+                this._Undo = false;
+                return;
+            }
+
             this._FolderRedoHistory.Push(this._CurrentDirectory);
-            this.LoadDirectory(this._FolderUndoHistory.Pop());
+            this.LoadDirectory(newDir);
             this.LastDirectoryIndex();
+
             this._Undo = false;
             UpdateTextbox();
         }
@@ -329,13 +356,17 @@ namespace ImViewLite
         {
             if (this.DirectorySelectedIndexCache.ContainsKey(_CurrentDirectory))
             {
+                int index = this.DirectorySelectedIndexCache[_CurrentDirectory];
+                if (this.listView1.Items.Count >= index || index < 0)
+                    return;
+
                 this.listView1.DeselectAll();
-                this.listView1.OldestSelectedIndex = this.DirectorySelectedIndexCache[_CurrentDirectory];
-                this.listView1.NewestSelectedIndex = this.DirectorySelectedIndexCache[_CurrentDirectory];
+                this.listView1.OldestSelectedIndex = index;
+                this.listView1.NewestSelectedIndex = index;
                 this.listView1.SelectedItemsCount = 1;
                 this.listView1.SelectedIndices.Clear();
-                this.listView1.SelectedIndices.Add(this.DirectorySelectedIndexCache[_CurrentDirectory]);
-                this.listView1.Items[this.DirectorySelectedIndexCache[_CurrentDirectory]].Focused = true;
+                this.listView1.SelectedIndices.Add(index);
+                this.listView1.Items[index].Focused = true;
                 this.listView1.Invalidate();
             }
         }
