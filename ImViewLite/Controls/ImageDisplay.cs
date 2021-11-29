@@ -147,6 +147,7 @@ namespace ImViewLite.Controls
                         GC.Collect();
                     }
                 }
+                this.ImagePath = null;
                 this._Image = value;
                 Invalidate();
             }
@@ -258,8 +259,8 @@ namespace ImViewLite.Controls
             if (this._Image != null)
                 _Image.Dispose();
 
-            this.ImagePath = new FileInfo(path);
             this.Image = i;
+            this.ImagePath = new FileInfo(path);
             Invalidate();
             return true;
         }

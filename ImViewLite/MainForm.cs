@@ -142,12 +142,15 @@ namespace ImViewLite
             this.listView1.VirtualListSize = 0;
             this.listView1.Sorting = SortOrder.None;
             this.listView1.FullRowSelect = InternalSettings.Full_Row_Select;
+            this.listView1.AllowDrop = InternalSettings.Allow_Drag;
+            //this.listView1.View = View.LargeIcon;
 
             listView1.RetrieveVirtualItem += new RetrieveVirtualItemEventHandler(listView1_RetrieveVirtualItem);
             listView1.CacheVirtualItems += new CacheVirtualItemsEventHandler(listView1_CacheVirtualItems);
             listView1.SelectedIndexChanged += ListView1_SelectedIndexChanged;
             listView1.ItemActivate += ListView1_ItemActivate;
             listView1.RightClicked += ListView1_RightClicked;
+            // listView1.ItemDrag += new ItemDragEventHandler(listView1_ItemDrag);
 
             this.KeyUp += MainForm_KeyUp;
             _LoadImageTimer.SetInterval(InternalSettings.Image_Delay_Load_Time);
@@ -164,10 +167,66 @@ namespace ImViewLite
             _CurrentDirectory = "";
             LoadDirectory("");
             LoadFavoriteDirectories();
+
+            if (this.TopMost)
+            {
+                this.Text = "+";
+            }
+            else
+            {
+                this.Text = "";
+            }
         }
 
+        protected override void OnDragOver(DragEventArgs e)
+        {
+            base.OnDragOver(e);
 
+            string[] data = (string[])e.Data.GetData(DataFormats.FileDrop);
 
+            if (data == null || data.Length < 1)
+            {
+                e.Effect = DragDropEffects.None;
+                return;
+            }
+
+            e.Effect = DragDropEffects.Move;
+        }
+
+        protected override void OnDragDrop(DragEventArgs e)
+        {
+            base.OnDragDrop(e);
+            /*
+                        string[] data = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+                        if(data == null || data.Length < 1)
+                        {
+                            e.Effect = DragDropEffects.None;
+                            return;
+                        }
+
+                        // shift is held 
+                        // copy files 
+                        if((e.KeyState & 4) == 4)
+                        {
+                            foreach(string path in data)
+                            {
+                                if (Directory.Exists(path))
+                                {
+                                    PathHelper.CopyDirectory(path);
+                                }
+                                if (File.Exists(path))
+                                {
+
+                                }
+                            }
+                        }
+                        else
+                        // move files 
+                        {
+
+                        }*/
+        }
 
         /// <summary>
         /// Empties the listview item cache and redraws the listview
@@ -258,6 +317,7 @@ namespace ImViewLite
             this.listView1.FullRowSelect = InternalSettings.Full_Row_Select;
             this.imageDisplay1.InterpolationMode = InternalSettings.Default_Interpolation_Mode;
             this.imageDisplay1.DrawMode = InternalSettings.Default_Draw_Mode;
+            this.listView1.AllowDrop = InternalSettings.Allow_Drag;
             this._LoadImageTimer.SetInterval(InternalSettings.Image_Delay_Load_Time);
             
             if (this.TopMost)
@@ -357,7 +417,8 @@ namespace ImViewLite
             if (this.DirectorySelectedIndexCache.ContainsKey(_CurrentDirectory))
             {
                 int index = this.DirectorySelectedIndexCache[_CurrentDirectory];
-                if (this.listView1.Items.Count >= index || index < 0)
+
+                if (this.listView1.Items.Count <= index || index < 0)
                     return;
 
                 this.listView1.DeselectAll();
@@ -458,7 +519,7 @@ namespace ImViewLite
         public void ReloadCurrentImage()
         {
             string newPath = listView1.GetSelectedItemText2();
-
+            
             FileInfo path;
             if (PathHelper.IsValidFilePath(newPath, out path))
             {
@@ -469,7 +530,6 @@ namespace ImViewLite
                     LoadImage(newPath);
                 }
             }
-            
         }
 
         /// <summary>
@@ -822,7 +882,7 @@ namespace ImViewLite
         {
             if (!PathHelper.IsValidFilePath(path))
                 return;
-            
+
             FileInfo finfo = new FileInfo(path);
 
             if (!finfo.Exists)
@@ -984,6 +1044,7 @@ namespace ImViewLite
             string path = listView1.GetSelectedItemText2();
 
             tsslItemOfItems.Text = $"{listView1.SelectedItemsCount} / {listView1.Items.Count} object(s) selected";
+
 
             if (Directory.Exists(path))
             {

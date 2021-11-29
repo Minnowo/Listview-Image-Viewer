@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.IO;
 using ImViewLite.Helpers;
 
 
@@ -26,6 +27,7 @@ namespace ImViewLite.Controls
         public LISTVIEW()
         {
             SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.EnableNotifyMessage, true);
+            this.AllowDrop = true;
         }
         
         public void DeselectAll()
@@ -44,6 +46,24 @@ namespace ImViewLite.Controls
             return Items[NewestSelectedIndex].SubItems[2].Text;
         }
 
+        protected override void OnItemDrag(ItemDragEventArgs e)
+        {
+            base.OnItemDrag(e);
+
+            if (AllowDrop && e.Button == MouseButtons.Left)
+            {
+                string[] files = new string[this.SelectedIndices.Count];
+                int c = 0;
+                foreach(int i in this.SelectedIndices)
+                {
+                    files[c] = this.Items[i].SubItems[2].Text;
+                    c++;
+                }
+
+                DoDragDrop(new DataObject(DataFormats.FileDrop, files), DragDropEffects.Move | DragDropEffects.Copy);
+            }
+        }
+       
         protected override void OnItemSelectionChanged(ListViewItemSelectionChangedEventArgs e)
         {
             LastSelectedItem = e.Item;

@@ -81,6 +81,13 @@ namespace ImViewLite.Settings
             set { CurrentUserSettings.FavoriteDirectories = value; }
         }
 
+
+        public static bool Allow_Drag
+        {
+            get { return CurrentUserSettings.Allow_Drag; }
+            set { CurrentUserSettings.Allow_Drag = value; }
+        }
+
         public static bool Toolstrip_Click_Through
         {
             get { return CurrentUserSettings.Tollstrip_Click_Through; }
@@ -403,6 +410,9 @@ namespace ImViewLite.Settings
 
         [DisplayName("Toolstrip Click Through")]
         public bool Tollstrip_Click_Through { get; set; } = true;
+
+        [DisplayName("Allow Item Drag")]
+        public bool Allow_Drag { get; set; } = true;
 
 
         [Description("Should the parent window follow children that take control."), DisplayName("Agressive Image Unload")]
