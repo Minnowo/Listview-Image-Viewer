@@ -33,8 +33,8 @@ namespace ImViewLite
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewGroup listViewGroup3 = new System.Windows.Forms.ListViewGroup("Directories", System.Windows.Forms.HorizontalAlignment.Left);
-            System.Windows.Forms.ListViewGroup listViewGroup4 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Directories", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.scMainContainer = new System.Windows.Forms.SplitContainer();
             this.listView1 = new ImViewLite.Controls.LISTVIEW();
@@ -92,6 +92,7 @@ namespace ImViewLite
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.tsbSettings = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.scMainContainer)).BeginInit();
             this.scMainContainer.Panel1.SuspendLayout();
             this.scMainContainer.Panel2.SuspendLayout();
@@ -139,18 +140,19 @@ namespace ImViewLite
             // 
             // listView1
             // 
+            this.listView1.AllowDrop = true;
             this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
             this.chName,
             this.chSize,
             this.chPath});
             this.listView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            listViewGroup3.Header = "Directories";
-            listViewGroup3.Name = "Directories";
-            listViewGroup4.Header = "Files";
-            listViewGroup4.Name = "Files";
+            listViewGroup1.Header = "Directories";
+            listViewGroup1.Name = "Directories";
+            listViewGroup2.Header = "Files";
+            listViewGroup2.Name = "Files";
             this.listView1.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup3,
-            listViewGroup4});
+            listViewGroup1,
+            listViewGroup2});
             this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(0, 0);
             this.listView1.Name = "listView1";
@@ -532,6 +534,7 @@ namespace ImViewLite
             this.toolStripDropDownButton3.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
             this.toolStripDropDownButton3.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.addCurrentFolderToolStripMenuItem,
+            this.toolStripMenuItem2,
             this.toolStripSeparator3});
             this.toolStripDropDownButton3.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripDropDownButton3.Name = "toolStripDropDownButton3";
@@ -541,14 +544,14 @@ namespace ImViewLite
             // addCurrentFolderToolStripMenuItem
             // 
             this.addCurrentFolderToolStripMenuItem.Name = "addCurrentFolderToolStripMenuItem";
-            this.addCurrentFolderToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
+            this.addCurrentFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.addCurrentFolderToolStripMenuItem.Text = "Add Current Folder";
             this.addCurrentFolderToolStripMenuItem.Click += new System.EventHandler(this.addCurrentFolderToolStripMenuItem_Click);
             // 
             // toolStripSeparator3
             // 
             this.toolStripSeparator3.Name = "toolStripSeparator3";
-            this.toolStripSeparator3.Size = new System.Drawing.Size(172, 6);
+            this.toolStripSeparator3.Size = new System.Drawing.Size(177, 6);
             // 
             // toolStripDropDownButton4
             // 
@@ -597,6 +600,13 @@ namespace ImViewLite
             this.toolStripButton1.Size = new System.Drawing.Size(83, 22);
             this.toolStripButton1.Text = "AlwaysOnTop";
             this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
+            // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem2.Text = "Remove Items...";
+            this.toolStripMenuItem2.Click += new System.EventHandler(this.toolStripMenuItem2_Click);
             // 
             // MainForm
             // 
@@ -684,6 +694,7 @@ namespace ImViewLite
         private System.Windows.Forms.ToolStripMenuItem addCurrentFolderToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripButton toolStripButton1;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
     }
 }
 

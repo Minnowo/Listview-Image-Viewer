@@ -17,6 +17,7 @@ namespace ImViewLite.Settings
 {
     public static class InternalSettings
     {
+        public const string DRIVES_FOLDERNAME = "*Drive(s)";
         public const string User_Settings_Path = "usrConfig.xml";
         public static string Temp_Image_Folder = Path.Combine(AppContext.BaseDirectory, "tmp");
 

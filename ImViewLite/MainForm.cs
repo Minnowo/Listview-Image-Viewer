@@ -164,9 +164,10 @@ namespace ImViewLite
             ResumeLayout();
 
             // empty string to just list all drives 
-            _CurrentDirectory = "";
-            LoadDirectory("");
+            _CurrentDirectory = InternalSettings.DRIVES_FOLDERNAME;
+            LoadDirectory(InternalSettings.DRIVES_FOLDERNAME);
             LoadFavoriteDirectories();
+            this.UpdateTextbox();
 
             if (this.TopMost)
             {
@@ -264,7 +265,7 @@ namespace ImViewLite
             this._Undo = true;
             string newDir = this._FolderRedoHistory.Pop();
             
-            if (newDir != "" && !Directory.Exists(newDir)) 
+            if (newDir != "" && newDir != InternalSettings.DRIVES_FOLDERNAME && !Directory.Exists(newDir)) 
             { 
                 UndoPreviousDirectory();
                 this._Undo = false;
@@ -273,7 +274,8 @@ namespace ImViewLite
             this._FolderUndoHistory.Push(this._CurrentDirectory);
             this.LoadDirectory(newDir);
             this.LastDirectoryIndex();
-            
+            this.UpdateTextbox();
+
             this._Undo = false;
             UpdateTextbox();
         }
@@ -289,7 +291,7 @@ namespace ImViewLite
             this._Undo = true;
             string newDir = this._FolderUndoHistory.Pop();
 
-            if (newDir != "" && !Directory.Exists(newDir))
+            if (newDir != "" && newDir != InternalSettings.DRIVES_FOLDERNAME && !Directory.Exists(newDir))
             {
                 PreviousDirectory();
                 this._Undo = false;
@@ -299,6 +301,7 @@ namespace ImViewLite
             this._FolderRedoHistory.Push(this._CurrentDirectory);
             this.LoadDirectory(newDir);
             this.LastDirectoryIndex();
+            this.UpdateTextbox();
 
             this._Undo = false;
             UpdateTextbox();
@@ -344,7 +347,7 @@ namespace ImViewLite
                 return;
             }
 
-            if (!string.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(path) && path != InternalSettings.DRIVES_FOLDERNAME)
             {
                 Directory.SetCurrentDirectory(path);
             }
@@ -440,6 +443,13 @@ namespace ImViewLite
             if (!PathHelper.IsValidDirectoryPath(this.CurrentDirectory))
                 return;
 
+            if(string.IsNullOrEmpty(this.CurrentDirectory) || CurrentDirectory == InternalSettings.DRIVES_FOLDERNAME)
+            {
+                this.LoadDirectory(InternalSettings.DRIVES_FOLDERNAME, true);
+                this.UpdateTextbox();
+                return;
+            }
+
             DirectoryInfo info = new DirectoryInfo(this.CurrentDirectory);
             if (info.Parent != null)
             {
@@ -448,8 +458,9 @@ namespace ImViewLite
             }
             else
             {
-                this.LoadDirectory("", true);
+                this.LoadDirectory(InternalSettings.DRIVES_FOLDERNAME, true);
             }
+            this.UpdateTextbox();
         }
 
         /// <summary>
@@ -990,7 +1001,7 @@ namespace ImViewLite
 
         private void LoadFavoriteDirectories()
         {
-            for(int i = 2; i < this.toolStripDropDownButton3.DropDownItems.Count; i++)
+            for(int i = this.toolStripDropDownButton3.DropDownItems.Count - 1; i > 2 ; i--)
             {
                 this.toolStripDropDownButton3.DropDownItems.RemoveAt(i);
             }
@@ -999,13 +1010,19 @@ namespace ImViewLite
             foreach(string i in InternalSettings.Favorite_Directories)
             {
                 c++;
+                ToolStripMenuItem btn = new ToolStripMenuItem(i, null, FavoriteItemClicked, $"favItem{c}");
+                btn.ShortcutKeyDisplayString = c.ToString();
+                
                 if (PathHelper.IsValidDirectoryPath(i, out DirectoryInfo info))
                 {
-                    ToolStripMenuItem btn = new ToolStripMenuItem(i, null, FavoriteItemClicked, $"favItem{c}");
-                    btn.ShortcutKeyDisplayString = c.ToString();
-                    btn.Tag = info;
-                    this.toolStripDropDownButton3.DropDownItems.Add(btn);
+                    btn.Tag = info.FullName;
                 }
+                else
+                {
+                    btn.Tag = InternalSettings.DRIVES_FOLDERNAME;
+                }
+
+                this.toolStripDropDownButton3.DropDownItems.Add(btn);
             }
         }
 
@@ -1016,7 +1033,16 @@ namespace ImViewLite
             if (btn == null)
                 return;
 
-            this.CurrentDirectory = ((DirectoryInfo)btn.Tag).FullName;
+            string path = (string)btn.Tag;
+            
+            if (PathHelper.IsValidDirectoryPath(path))
+            {
+                this.CurrentDirectory = path;
+            }
+            if (string.IsNullOrEmpty(path) || path == InternalSettings.DRIVES_FOLDERNAME)
+            {
+                this.CurrentDirectory = InternalSettings.DRIVES_FOLDERNAME;
+            }
         }
 
         private void MainForm_KeyUp(object sender, KeyEventArgs e)
@@ -1326,9 +1352,9 @@ namespace ImViewLite
 
             string text = textBox1.Text.Trim();
 
-            if (string.IsNullOrEmpty(text))
+            if (string.IsNullOrEmpty(text) || text == InternalSettings.DRIVES_FOLDERNAME)
             {
-                LoadDirectory("", true);
+                LoadDirectory(InternalSettings.DRIVES_FOLDERNAME, true);
             }
 
             if (PathHelper.IsValidDirectoryPath(text))
@@ -1650,6 +1676,22 @@ namespace ImViewLite
         private void toolStripButton1_Click(object sender, EventArgs e)
         {
             ToggleAlwaysOnTop();
+        }
+
+        private void toolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            using(RemoveItemsFromListForm f = new RemoveItemsFromListForm(InternalSettings.Favorite_Directories.ToArray()))
+            {
+                f.ShowDialog();
+
+                object[] result = f.Items;
+                InternalSettings.Favorite_Directories.Clear();
+                foreach(object o in result)
+                {
+                    InternalSettings.Favorite_Directories.Add((string)o);
+                }
+                this.LoadFavoriteDirectories();
+            }
         }
     }
 }

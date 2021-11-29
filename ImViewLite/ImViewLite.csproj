@@ -101,6 +101,12 @@
     <Compile Include="Forms\OpenWithForm.Designer.cs">
       <DependentUpon>OpenWithForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\RemoveItemsFromList.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\RemoveItemsFromList.Designer.cs">
+      <DependentUpon>RemoveItemsFromList.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\SettingsForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -204,6 +210,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\OpenWithForm.resx">
       <DependentUpon>OpenWithForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\RemoveItemsFromList.resx">
+      <DependentUpon>RemoveItemsFromList.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\SettingsForm.resx" />
     <EmbeddedResource Include="Helpers\Color\Picker\ColorDisplay.resx" />

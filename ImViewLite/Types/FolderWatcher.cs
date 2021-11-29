@@ -345,7 +345,7 @@ namespace ImViewLite.Misc
 
                 DirectoryCache.Clear();
                 FileCache.Clear();
-                if (!string.IsNullOrEmpty(path))
+                if (!string.IsNullOrEmpty(path) && path != InternalSettings.DRIVES_FOLDERNAME)
                 {
                     UpdateWatchers(path, false);
                 }
