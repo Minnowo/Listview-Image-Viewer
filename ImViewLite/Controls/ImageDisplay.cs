@@ -119,6 +119,7 @@ namespace ImViewLite.Controls
         public bool AnimationPaused = false;
         public bool CenterImage = true;
         public bool DisposeImageOnReplace = true;
+        public bool ClearImagePathOnReplace = true;
         public double Zoom = 1;
 
         public IMAGE Image
@@ -139,6 +140,7 @@ namespace ImViewLite.Controls
                         this.IsAnimating = false;
                     }
                 }
+
                 if (DisposeImageOnReplace)
                 {
                     this._Image?.Dispose();
@@ -147,14 +149,37 @@ namespace ImViewLite.Controls
                         GC.Collect();
                     }
                 }
-                this.ImagePath = null;
+
+                if (this.ClearImagePathOnReplace)
+                {
+                    this.ImagePath = null;
+                }
                 this._Image = value;
+                this._drx = 0;
+                this._dry = 0;
                 Invalidate();
             }
         }
         private IMAGE _Image;
 
         public Brush BackgroundTileBrush;
+
+        /// <summary>
+        /// used when dragging the image when the <see cref="DrawMode"/> is set to actual size
+        /// </summary>
+        Point _lastClickedPoint;
+        bool _isLeftClicking = false;
+
+        /// <summary>
+        /// x offset to draw the image when the image is not being centered 
+        /// </summary>
+        int _drx = 0;
+
+        /// <summary>
+        /// y offset to draw the image when the image is not being centered
+        /// </summary>
+        int _dry = 0;
+
         public ImageDisplay()
         {
             this.SetStyle(
@@ -242,6 +267,32 @@ namespace ImViewLite.Controls
         }
 
         /// <summary>
+        /// Reloads the current image, or does nothing if it cannot.
+        /// </summary>
+        public void ReloadImage()
+        {
+            if (this.ImagePath == null || !this.ImagePath.Exists)
+                return;
+
+            IMAGE i = ImageHelper.LoadImage(this.ImagePath.FullName);
+
+            if (i == null)
+                return;
+
+            bool _ = this.DisposeImageOnReplace;
+            bool __ = this.ClearImagePathOnReplace;
+
+            this.DisposeImageOnReplace = true;
+            this.ClearImagePathOnReplace = false;
+
+            this.Image = i;
+
+            this.DisposeImageOnReplace = _;
+            this.ClearImagePathOnReplace = __;
+            Invalidate();
+        }
+
+        /// <summary>
         /// Tries to load an image from the given path.
         /// </summary>
         /// <param name="path">The path of the image.</param>
@@ -256,15 +307,22 @@ namespace ImViewLite.Controls
             if (i == null)
                 return false;
 
-            if (this._Image != null)
-                _Image.Dispose();
+            bool _ = this.DisposeImageOnReplace;
+            this.DisposeImageOnReplace = true;
 
             this.Image = i;
             this.ImagePath = new FileInfo(path);
+
+            this.DisposeImageOnReplace = _;
             Invalidate();
             return true;
         }
 
+        /// <summary>
+        /// Gets the control size.
+        /// </summary>
+        /// <param name="includePadding">Should padding be subtracted from the client size.</param>
+        /// <returns>The size of the control with or without padding.</returns>
         private Rectangle GetInsideViewPort(bool includePadding)
         {
             int left = 0;
@@ -283,7 +341,9 @@ namespace ImViewLite.Controls
             return new Rectangle(left, top, width, height);
         }
 
-
+        /// <summary>
+        /// sets the zoom level to fit the image within the control, while keeping aspect ratio
+        /// </summary>
         private void FitImage()
         {
             if (this._Image == null)
@@ -321,15 +381,18 @@ namespace ImViewLite.Controls
             this.Zoom = zoom;
         }
 
-        int drx = 0;
-        int dry = 0;
+        
+        /// <summary>
+        /// Gets the destination rectangle to draw the image
+        /// </summary>
+        /// <returns></returns>
         private Rectangle GetImageViewPort()
         {
             if (this._Image == null)
                 return Rectangle.Empty;
 
-            int centerX = drx;
-            int centerY = dry;
+            int centerX = _drx;
+            int centerY = _dry;
             int width = this._Image.Width;
             int height = this._Image.Height;
             switch (this.DrawMode)
@@ -337,9 +400,17 @@ namespace ImViewLite.Controls
                 case DrawMode.ActualSize:
                     if (this.CenterImage)
                     {
-                        centerX = this.Width / 2 - width / 2;
-                        centerY = this.Height / 2 - height / 2;
+                        if (width < this.Width)
+                        {
+                            centerX = this.Width / 2 - width / 2;
+                        }
+
+                        if (height < this.Height)
+                        {
+                            centerY = this.Height / 2 - height / 2;
+                        }
                     }
+
                     return new Rectangle(centerX, centerY, width, height);
 
                 case DrawMode.FitImage:
@@ -383,20 +454,27 @@ namespace ImViewLite.Controls
             return new RectangleF(0, 0, this._Image.Width, this._Image.Height);
         }
 
-        /*Point cs;
-        bool isLeftClicking = false;
+        
         protected override void OnMouseDown(MouseEventArgs e)
         {
             base.OnMouseDown(e);
-            if(e.Button == MouseButtons.Left)
+            // if the drawmode is set to actual size, we need to allow the user to drag the image
+
+            if (this.DrawMode != DrawMode.ActualSize)
+                return;
+         
+            // if they left click, set variables which enable dragging
+            if (e.Button == MouseButtons.Left)
             {
-                cs = e.Location;
-                isLeftClicking = true;
+                _lastClickedPoint = e.Location;
+                _isLeftClicking = true;
             }
-            if(e.Button == MouseButtons.Right)
+
+            // on right click, we reset the offsets
+            if (e.Button == MouseButtons.Right)
             {
-                drx = 0;
-                dry = 0;
+                _drx = 0;
+                _dry = 0;
                 Invalidate();
             }
         }
@@ -405,26 +483,39 @@ namespace ImViewLite.Controls
             base.OnMouseUp(e);
             if (e.Button == MouseButtons.Left)
             {
-                isLeftClicking = false;
+                _isLeftClicking = false;
             }
         }
         protected override void OnMouseMove(MouseEventArgs e)
         {
             base.OnMouseMove(e);
-            if (isLeftClicking)
+
+            // if not in actual size mode, drag the image
+            if (this.DrawMode != DrawMode.ActualSize)
+                return;
+         
+            // if user is left clicking
+            if (_isLeftClicking)
             {
-                drx -= cs.X - e.X;
-                if (drx > this.Width)
-                    drx = this.Width;
+                // adjust the offset x
+                _drx -= _lastClickedPoint.X - e.X;
+                if (_drx > this.Width)
+                {
+                    _drx = this.Width;
+                }
 
-                dry -= cs.Y - e.Y;
-                if (dry > this.Height)
-                    dry = this.Height;
+                // adjust the offset y 
+                _dry -= _lastClickedPoint.Y - e.Y;
+                if (_dry > this.Height)
+                {
+                    _dry = this.Height;
+                }
 
-                cs = e.Location;
+                // set the new last click pos and redraw the image
+                _lastClickedPoint = e.Location;
                 Invalidate();
             }
-        }*/
+        }
 
         private void DrawImage(Graphics g)
         {
@@ -494,6 +585,7 @@ namespace ImViewLite.Controls
         {
             if (this.AnimationPaused)
                 return;
+
             this.Invalidate();
         }
 

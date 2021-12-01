@@ -19,7 +19,7 @@ namespace ImViewLite.Forms
                 int c = _Items.Count(_ => _ != null);
                 if (c < 1)
                 {
-                    return null;
+                    return new object[0];
                 }
 
                 object[] items = new object[c];

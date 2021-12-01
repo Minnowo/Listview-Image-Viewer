@@ -156,8 +156,12 @@ namespace ImViewLite
             _LoadImageTimer.SetInterval(InternalSettings.Image_Delay_Load_Time);
             _LoadImageTimer.Tick += LoadImageTimer_Tick;
 
-            this.textBox1.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+            this.textBox1.ShortcutsEnabled = true;
+
+            // SuggestAppend is nice, but if you hit ctrl + A while its suggesting it just empties the textbox
+            this.textBox1.AutoCompleteMode = AutoCompleteMode.Suggest;
             this.textBox1.AutoCompleteSource = AutoCompleteSource.FileSystemDirectories;
+
             this.textBox1.Text = "";
             this.TopMost = InternalSettings.Always_On_Top;
             this.KeyPreview = true;
@@ -873,15 +877,30 @@ namespace ImViewLite
                 foreach (int i in listView1.SelectedIndices)
                 {
                     file = listView1.Items[i].SubItems[2].Text;
-                    PathHelper.MoveFile(file, Path.Combine(path, Path.GetFileName(file)));
+                    if (Directory.Exists(file))
+                    {
+                        PathHelper.MoveDirectory(file, Path.Combine(path, Path.GetFileName(file)));
+                    }
+                    if (File.Exists(file))
+                    {
+                        PathHelper.MoveFile(file, Path.Combine(path, Path.GetFileName(file)));
+                    }
                 }
+                this.listView1.DeselectAll();
                 return;
             }
 
             if (listView1.FocusedItem != null)
             {
                 file = listView1.FocusedItem.SubItems[2].Text;
-                PathHelper.MoveFile(file, Path.Combine(path, Path.GetFileName(file)));
+                if (Directory.Exists(file))
+                {
+                    PathHelper.MoveDirectory(file, Path.Combine(path, Path.GetFileName(file)));
+                }
+                if (File.Exists(file))
+                {
+                    PathHelper.MoveFile(file, Path.Combine(path, Path.GetFileName(file)));
+                }
             }
         }
 
@@ -1043,6 +1062,7 @@ namespace ImViewLite
             {
                 this.CurrentDirectory = InternalSettings.DRIVES_FOLDERNAME;
             }
+            UpdateTextbox();
         }
 
         private void MainForm_KeyUp(object sender, KeyEventArgs e)
@@ -1562,6 +1582,7 @@ namespace ImViewLite
             {
                 ClipboardHelper.CopyImageFromFile(listView1.FocusedItem.SubItems[2].Text);
             }
+            this.contextMenuStrip1.Close();
         }
 
         private void widthXHeightToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1572,6 +1593,7 @@ namespace ImViewLite
         private void dimensionsToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CopyDimensionsSelectedFiles("{0}x{1}");
+            this.contextMenuStrip1.Close();
         }
 
         private void widthToolStripMenuItem_Click(object sender, EventArgs e)
@@ -1659,7 +1681,7 @@ namespace ImViewLite
 
 
         private void textBox1_PreviewKeyDown(object sender, PreviewKeyDownEventArgs e)
-        {   
+        {
             if (e.KeyCode == Keys.Tab)
             {
                 e.IsInputKey = true;
@@ -1682,6 +1704,7 @@ namespace ImViewLite
         {
             using(RemoveItemsFromListForm f = new RemoveItemsFromListForm(InternalSettings.Favorite_Directories.ToArray()))
             {
+                f.StartPosition = FormStartPosition.CenterScreen;
                 f.ShowDialog();
 
                 object[] result = f.Items;
@@ -1692,6 +1715,27 @@ namespace ImViewLite
                 }
                 this.LoadFavoriteDirectories();
             }
+        }
+
+        private void invertImageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteCommand(Command.InvertColor);
+        }
+
+        private void grayscaleImageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ExecuteCommand(Command.Grayscale);
+        }
+
+        private void sizeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CopySelectedItemsSize(FileSizeUnit.Byte);
+            this.contextMenuStrip1.Close();
+        }
+
+        private void toolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            imageDisplay1.ReloadImage();
         }
     }
 }

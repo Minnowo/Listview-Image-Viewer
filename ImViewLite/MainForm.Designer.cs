@@ -33,15 +33,10 @@ namespace ImViewLite
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.ListViewGroup listViewGroup1 = new System.Windows.Forms.ListViewGroup("Directories", System.Windows.Forms.HorizontalAlignment.Left);
-            System.Windows.Forms.ListViewGroup listViewGroup2 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup3 = new System.Windows.Forms.ListViewGroup("Directories", System.Windows.Forms.HorizontalAlignment.Left);
+            System.Windows.Forms.ListViewGroup listViewGroup4 = new System.Windows.Forms.ListViewGroup("Files", System.Windows.Forms.HorizontalAlignment.Left);
             this.textBox1 = new System.Windows.Forms.TextBox();
             this.scMainContainer = new System.Windows.Forms.SplitContainer();
-            this.listView1 = new ImViewLite.Controls.LISTVIEW();
-            this.chName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.chSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.chPath = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.imageDisplay1 = new ImViewLite.Controls.ImageDisplay();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.tsslItemOfItems = new System.Windows.Forms.ToolStripStatusLabel();
             this.tsslFilePath = new System.Windows.Forms.ToolStripStatusLabel();
@@ -79,12 +74,20 @@ namespace ImViewLite
             this.renameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.deleteToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.listView1 = new ImViewLite.Controls.LISTVIEW();
+            this.chName = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.chSize = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.chPath = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.imageDisplay1 = new ImViewLite.Controls.ImageDisplay();
             this.tseMainToolstrip = new ImViewLite.Controls.ToolStripEx();
             this.toolStripDropDownButton1 = new System.Windows.Forms.ToolStripDropDownButton();
             this.openToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDropDownButton2 = new System.Windows.Forms.ToolStripDropDownButton();
+            this.invertImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.grayscaleImageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripDropDownButton3 = new System.Windows.Forms.ToolStripDropDownButton();
             this.addCurrentFolderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripDropDownButton4 = new System.Windows.Forms.ToolStripDropDownButton();
             this.tscbInterpolationMode = new System.Windows.Forms.ToolStripComboBox();
@@ -92,7 +95,7 @@ namespace ImViewLite
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.tsbSettings = new System.Windows.Forms.ToolStripButton();
             this.toolStripButton1 = new System.Windows.Forms.ToolStripButton();
-            this.toolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripMenuItem3 = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.scMainContainer)).BeginInit();
             this.scMainContainer.Panel1.SuspendLayout();
             this.scMainContainer.Panel2.SuspendLayout();
@@ -137,62 +140,6 @@ namespace ImViewLite
             this.scMainContainer.SplitterDistance = 483;
             this.scMainContainer.TabIndex = 2;
             this.scMainContainer.TabStop = false;
-            // 
-            // listView1
-            // 
-            this.listView1.AllowDrop = true;
-            this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.chName,
-            this.chSize,
-            this.chPath});
-            this.listView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            listViewGroup1.Header = "Directories";
-            listViewGroup1.Name = "Directories";
-            listViewGroup2.Header = "Files";
-            listViewGroup2.Name = "Files";
-            this.listView1.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
-            listViewGroup1,
-            listViewGroup2});
-            this.listView1.HideSelection = false;
-            this.listView1.Location = new System.Drawing.Point(0, 0);
-            this.listView1.Name = "listView1";
-            this.listView1.ShowGroups = false;
-            this.listView1.Size = new System.Drawing.Size(483, 385);
-            this.listView1.TabIndex = 0;
-            this.listView1.UseCompatibleStateImageBehavior = false;
-            this.listView1.View = System.Windows.Forms.View.Details;
-            // 
-            // chName
-            // 
-            this.chName.Tag = "";
-            this.chName.Text = "Name";
-            this.chName.Width = 250;
-            // 
-            // chSize
-            // 
-            this.chSize.Text = "Size";
-            this.chSize.Width = 80;
-            // 
-            // chPath
-            // 
-            this.chPath.Text = "Path";
-            this.chPath.Width = 145;
-            // 
-            // imageDisplay1
-            // 
-            this.imageDisplay1.CellColor1 = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
-            this.imageDisplay1.CellColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.imageDisplay1.CellScale = 2F;
-            this.imageDisplay1.CellSize = 32;
-            this.imageDisplay1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.imageDisplay1.DrawMode = ImViewLite.Controls.DrawMode.FitImage;
-            this.imageDisplay1.Image = null;
-            this.imageDisplay1.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-            this.imageDisplay1.Location = new System.Drawing.Point(0, 0);
-            this.imageDisplay1.Name = "imageDisplay1";
-            this.imageDisplay1.Size = new System.Drawing.Size(313, 385);
-            this.imageDisplay1.TabIndex = 0;
-            this.imageDisplay1.TabStop = false;
             // 
             // statusStrip1
             // 
@@ -329,6 +276,7 @@ namespace ImViewLite
             this.sizeToolStripMenuItem.Name = "sizeToolStripMenuItem";
             this.sizeToolStripMenuItem.Size = new System.Drawing.Size(136, 22);
             this.sizeToolStripMenuItem.Text = "Size";
+            this.sizeToolStripMenuItem.Click += new System.EventHandler(this.sizeToolStripMenuItem_Click);
             // 
             // bytesToolStripMenuItem
             // 
@@ -488,6 +436,62 @@ namespace ImViewLite
             this.deleteToolStripMenuItem.Text = "Delete";
             this.deleteToolStripMenuItem.Click += new System.EventHandler(this.deleteToolStripMenuItem_Click);
             // 
+            // listView1
+            // 
+            this.listView1.AllowDrop = true;
+            this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.chName,
+            this.chSize,
+            this.chPath});
+            this.listView1.Dock = System.Windows.Forms.DockStyle.Fill;
+            listViewGroup3.Header = "Directories";
+            listViewGroup3.Name = "Directories";
+            listViewGroup4.Header = "Files";
+            listViewGroup4.Name = "Files";
+            this.listView1.Groups.AddRange(new System.Windows.Forms.ListViewGroup[] {
+            listViewGroup3,
+            listViewGroup4});
+            this.listView1.HideSelection = false;
+            this.listView1.Location = new System.Drawing.Point(0, 0);
+            this.listView1.Name = "listView1";
+            this.listView1.ShowGroups = false;
+            this.listView1.Size = new System.Drawing.Size(483, 385);
+            this.listView1.TabIndex = 0;
+            this.listView1.UseCompatibleStateImageBehavior = false;
+            this.listView1.View = System.Windows.Forms.View.Details;
+            // 
+            // chName
+            // 
+            this.chName.Tag = "";
+            this.chName.Text = "Name";
+            this.chName.Width = 250;
+            // 
+            // chSize
+            // 
+            this.chSize.Text = "Size";
+            this.chSize.Width = 80;
+            // 
+            // chPath
+            // 
+            this.chPath.Text = "Path";
+            this.chPath.Width = 145;
+            // 
+            // imageDisplay1
+            // 
+            this.imageDisplay1.CellColor1 = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
+            this.imageDisplay1.CellColor2 = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.imageDisplay1.CellScale = 2F;
+            this.imageDisplay1.CellSize = 32;
+            this.imageDisplay1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.imageDisplay1.DrawMode = ImViewLite.Controls.DrawMode.FitImage;
+            this.imageDisplay1.Image = null;
+            this.imageDisplay1.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            this.imageDisplay1.Location = new System.Drawing.Point(0, 0);
+            this.imageDisplay1.Name = "imageDisplay1";
+            this.imageDisplay1.Size = new System.Drawing.Size(313, 385);
+            this.imageDisplay1.TabIndex = 0;
+            this.imageDisplay1.TabStop = false;
+            // 
             // tseMainToolstrip
             // 
             this.tseMainToolstrip.ClickThrough = false;
@@ -524,10 +528,28 @@ namespace ImViewLite
             // toolStripDropDownButton2
             // 
             this.toolStripDropDownButton2.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Text;
+            this.toolStripDropDownButton2.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.invertImageToolStripMenuItem,
+            this.grayscaleImageToolStripMenuItem,
+            this.toolStripMenuItem3});
             this.toolStripDropDownButton2.ImageTransparentColor = System.Drawing.Color.Magenta;
             this.toolStripDropDownButton2.Name = "toolStripDropDownButton2";
             this.toolStripDropDownButton2.Size = new System.Drawing.Size(40, 22);
             this.toolStripDropDownButton2.Text = "Edit";
+            // 
+            // invertImageToolStripMenuItem
+            // 
+            this.invertImageToolStripMenuItem.Name = "invertImageToolStripMenuItem";
+            this.invertImageToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.invertImageToolStripMenuItem.Text = "Invert Image";
+            this.invertImageToolStripMenuItem.Click += new System.EventHandler(this.invertImageToolStripMenuItem_Click);
+            // 
+            // grayscaleImageToolStripMenuItem
+            // 
+            this.grayscaleImageToolStripMenuItem.Name = "grayscaleImageToolStripMenuItem";
+            this.grayscaleImageToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.grayscaleImageToolStripMenuItem.Text = "Grayscale Image";
+            this.grayscaleImageToolStripMenuItem.Click += new System.EventHandler(this.grayscaleImageToolStripMenuItem_Click);
             // 
             // toolStripDropDownButton3
             // 
@@ -547,6 +569,13 @@ namespace ImViewLite
             this.addCurrentFolderToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
             this.addCurrentFolderToolStripMenuItem.Text = "Add Current Folder";
             this.addCurrentFolderToolStripMenuItem.Click += new System.EventHandler(this.addCurrentFolderToolStripMenuItem_Click);
+            // 
+            // toolStripMenuItem2
+            // 
+            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
+            this.toolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem2.Text = "Remove Items...";
+            this.toolStripMenuItem2.Click += new System.EventHandler(this.toolStripMenuItem2_Click);
             // 
             // toolStripSeparator3
             // 
@@ -601,12 +630,12 @@ namespace ImViewLite
             this.toolStripButton1.Text = "AlwaysOnTop";
             this.toolStripButton1.Click += new System.EventHandler(this.toolStripButton1_Click);
             // 
-            // toolStripMenuItem2
+            // toolStripMenuItem3
             // 
-            this.toolStripMenuItem2.Name = "toolStripMenuItem2";
-            this.toolStripMenuItem2.Size = new System.Drawing.Size(180, 22);
-            this.toolStripMenuItem2.Text = "Remove Items...";
-            this.toolStripMenuItem2.Click += new System.EventHandler(this.toolStripMenuItem2_Click);
+            this.toolStripMenuItem3.Name = "toolStripMenuItem3";
+            this.toolStripMenuItem3.Size = new System.Drawing.Size(180, 22);
+            this.toolStripMenuItem3.Text = "Reload Image";
+            this.toolStripMenuItem3.Click += new System.EventHandler(this.toolStripMenuItem3_Click);
             // 
             // MainForm
             // 
@@ -695,6 +724,9 @@ namespace ImViewLite
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripButton toolStripButton1;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem2;
+        private System.Windows.Forms.ToolStripMenuItem invertImageToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem grayscaleImageToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem3;
     }
 }
 
