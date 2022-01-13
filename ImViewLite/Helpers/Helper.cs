@@ -66,15 +66,15 @@ namespace ImViewLite.Helpers
             return null;
         }
 
-        public static int StringCompareNatural(string a, string b)
+        public static int StringCompareNatural(string a, string b, StringComparison comparison = StringComparison.CurrentCulture)
         {
             Regex regex = InternalSettings.ReDigit;
 
-            int maxDigits = Math.Max(regex.Match(a).Value.Length, regex.Match(b).Value.Length);
+            int max = new[] { a, b }.SelectMany(x => regex.Matches(x).Cast<Match>().Select(y => (int?)y.Value.Length)).Max() ?? 0;
 
             return string.Compare(
-                regex.Replace(a, match => match.Value.PadLeft(maxDigits, '0')), 
-                regex.Replace(b, match => match.Value.PadLeft(maxDigits, '0')));
+                regex.Replace(a, m => m.Value.PadLeft(max, '0')),
+                regex.Replace(b, m => m.Value.PadLeft(max, '0')), comparison);
         }
 
 
